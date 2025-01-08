@@ -1,0 +1,21 @@
+From: John Smith <john.smith@example.com>
+To: Jane Doe <jane.doe@example.com>
+Subject: Custody Schedule Change Request
+Date: Mon, 15 Jan 2024 09:30:00 -0500
+
+Dear Jane,
+
+I hope this email finds you well. I am writing regarding our custody schedule for next week. Due to an important medical appointment that has been scheduled for Tommy on Tuesday, January 23rd at 2:00 PM at Children's Medical Center, I would like to request a modification to our regular pickup time.
+
+Instead of picking Tommy up at 3:00 PM, would it be possible for me to pick him up at 1:00 PM? This would allow enough time to get to the appointment and ensure we're not rushed. Dr. Williams has specifically requested that both parents be present for this follow-up visit if possible.
+
+Additionally, I wanted to inform you that Tommy's school parent-teacher conference has been scheduled for Thursday, January 25th at 4:30 PM. Ms. Johnson mentioned it would be beneficial if we could both attend to discuss his recent academic progress.
+
+Please let me know if these arrangements work for you. If the proposed time for Tuesday doesn't work with your schedule, perhaps we can find an alternative solution that accommodates both the medical appointment and your commitments.
+
+Thank you for your consideration.
+
+Best regards,
+John
+
+P.S. Tommy mentioned he left his math textbook at your house. Could you please make sure he has it when I pick him up? He has homework due on Wednesday.

@@ -1,0 +1,39 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Run chunking tests
+npm run test:chunking
+
+# Check for direct MCP tool usage
+! git diff --cached --name-only | xargs grep -l "use_mcp_tool.*analyze"
+
+# Verify chunking metadata
+npm run verify:chunking
+
+# Run monitoring checks
+npm run monitor:chunking
+
+# Add chunking report to commit message
+npm run report:chunking >> $1
+
+# Block commits that bypass chunking
+if git diff --cached --name-only | xargs grep -l "MAX_CHUNK_SIZE.*=.*[2-9][0-9]\{5\}"; then
+  echo "ERROR: Attempting to set MAX_CHUNK_SIZE above 200k tokens"
+  exit 1
+fi
+
+# Check for required tests
+required_test_pattern="chunking.*test"
+if git diff --cached --name-only | grep -q "src/.*\.js$"; then
+  if ! git diff --cached --name-only | grep -q "tests/.*${required_test_pattern}.*\.js$"; then
+    echo "ERROR: Missing chunking tests for modified source files"
+    exit 1
+  fi
+fi
+
+# Verify documentation updates
+if git diff --cached --name-only | grep -q "src/services/.*\.js$"; then
+  if ! git diff --cached --name-only | grep -q "docs/architecture/CHUNKING\.md$"; then
+    echo "WARNING: Consider updating chunking documentation for service changes"
+  fi
+fi

@@ -1,0 +1,157 @@
+{
+    "folders": [
+        {
+            "path": ".",
+            "name": "EvidenceAI"
+        }
+    ],
+    "settings": {
+        "window.title": "EvidenceAI Development",
+        "workbench.colorCustomizations": {
+            "titleBar.activeBackground": "#2C3E50",
+            "titleBar.activeForeground": "#ffffff",
+            "activityBar.background": "#2C3E50",
+            "activityBar.foreground": "#ffffff",
+            "statusBar.background": "#2C3E50",
+            "statusBar.foreground": "#ffffff"
+        },
+        "files.associations": {
+            "*.md": "markdown",
+            "*.bat": "bat",
+            "*.ps1": "powershell",
+            "PROJECT_CONTEXT.md": "markdown"
+        },
+        "terminal.integrated.defaultProfile.windows": "PowerShell",
+        "terminal.integrated.profiles.windows": {
+            "PowerShell": {
+                "source": "PowerShell",
+                "icon": "terminal-powershell",
+                "args": ["-NoExit", "-Command", "& {. ./init_context.ps1}"]
+            },
+            "Command Prompt": {
+                "path": "C:\\Windows\\System32\\cmd.exe",
+                "args": ["/K", "init_context.bat"]
+            }
+        },
+        "git.enabled": true,
+        "git.autofetch": true,
+        "git.confirmSync": true,
+        "editor.formatOnSave": true,
+        "editor.rulers": [80, 100],
+        "editor.bracketPairColorization.enabled": true,
+        "editor.guides.bracketPairs": true,
+        "editor.suggestSelection": "first",
+        "editor.tabSize": 2,
+        "files.exclude": {
+            "**/.git": true,
+            "**/.DS_Store": true,
+            "**/node_modules": true,
+            "**/*.pyc": true,
+            "**/.vscode-test": true
+        },
+        "search.exclude": {
+            "**/node_modules": true,
+            "**/bower_components": true,
+            "**/*.code-search": true,
+            "**/dist": true,
+            "**/coverage": true
+        },
+        "workbench.startupEditor": "none",
+        "workbench.editor.enablePreview": false,
+        "workbench.editor.labelFormat": "medium",
+        "explorer.autoReveal": true,
+        "explorer.confirmDelete": true,
+        "explorer.confirmDragAndDrop": true,
+        "javascript.updateImportsOnFileMove.enabled": "always",
+        "typescript.updateImportsOnFileMove.enabled": "always",
+        "npm.packageManager": "npm",
+        "debug.javascript.autoAttachFilter": "smart",
+        "debug.javascript.terminalOptions": {
+            "skipFiles": [
+                "<node_internals>/**"
+            ]
+        }
+    },
+    "extensions": {
+        "recommendations": [
+            "dbaeumer.vscode-eslint",
+            "esbenp.prettier-vscode",
+            "ms-vscode.powershell",
+            "github.vscode-pull-request-github",
+            "eamodio.gitlens",
+            "yzhang.markdown-all-in-one",
+            "christian-kohler.path-intellisense",
+            "streetsidesoftware.code-spell-checker",
+            "ms-vscode.js-debug",
+            "ms-vscode.vscode-js-profile-flame",
+            "ms-vscode.references-view",
+            "visualstudioexptteam.vscodeintellicode"
+        ]
+    },
+    "launch": {
+        "version": "0.2.0",
+        "configurations": [
+            {
+                "type": "node",
+                "request": "launch",
+                "name": "Debug Current File",
+                "program": "${file}",
+                "skipFiles": ["<node_internals>/**"],
+                "console": "integratedTerminal"
+            },
+            {
+                "type": "node",
+                "request": "launch",
+                "name": "Run Script",
+                "program": "${workspaceFolder}/scripts/${input:scriptName}",
+                "skipFiles": ["<node_internals>/**"],
+                "console": "integratedTerminal"
+            }
+        ],
+        "inputs": [
+            {
+                "id": "scriptName",
+                "type": "pickString",
+                "description": "Select script to run",
+                "options": [
+                    "test-pdf.js",
+                    "process-ofw.js",
+                    "validate-ofw-processing.js"
+                ]
+            }
+        ]
+    },
+    "tasks": {
+        "version": "2.0.0",
+        "tasks": [
+            {
+                "label": "Initialize Development Context",
+                "type": "shell",
+                "command": "./init_context.ps1",
+                "problemMatcher": [],
+                "presentation": {
+                    "reveal": "always",
+                    "panel": "new",
+                    "clear": true
+                },
+                "runOptions": {
+                    "runOn": "folderOpen"
+                }
+            },
+            {
+                "label": "Update Project Context",
+                "type": "shell",
+                "command": "git add PROJECT_CONTEXT.md && git commit -m \"Update project context\"",
+                "problemMatcher": []
+            },
+            {
+                "label": "Run Tests",
+                "type": "npm",
+                "script": "test",
+                "group": {
+                    "kind": "test",
+                    "isDefault": true
+                }
+            }
+        ]
+    }

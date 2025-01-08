@@ -1,0 +1,59 @@
+From: test@example.com
+To: test@example.com
+Subject: Token Limit Test (245,988 tokens)
+Date: Thu, 14 Dec 2023 10:00:00 -0800
+
+=== Test Document ===
+
+This document is designed to test our chunking system with exactly 245,988 tokens (the size that originally caused issues).
+
+${Array(500).fill(`
+Section ${Math.random()}
+
+This is a section of text designed to help us reach the exact token count that previously caused issues. Each section contains
+multiple paragraphs with varying content to make the test more realistic.
+
+Key Points:
+1. Testing token limits
+2. Verifying chunking behavior
+3. Ensuring proper processing
+4. Maintaining context
+5. Validating output
+
+Technical Details:
+- Processing requirements
+- Chunking strategy
+- Token estimation
+- Size validation
+- Quality checks
+
+Implementation Notes:
+* Content structure must be preserved
+* Sections should be properly handled
+* References must be maintained
+* Context should be preserved
+* Processing should be efficient
+
+${Array(10).fill(`
+Paragraph with detailed technical content discussing various aspects of the system implementation, architecture decisions,
+processing requirements, validation checks, and quality assurance measures. This helps us reach our target token count while
+maintaining realistic content structure and complexity.
+
+Additional considerations include performance optimization, resource utilization, error handling, monitoring, and reporting.
+These aspects are crucial for ensuring robust system operation and maintaining high quality standards across all processing
+stages.`).join('\n')}
+
+Analysis Results:
+- Performance metrics tracked
+- Quality checks passed
+- Validation complete
+- Processing verified
+- Output confirmed
+
+${Array(5).fill(`
+Detailed analysis of processing results, including performance metrics, quality indicators, validation status, and overall
+effectiveness measures. This information helps verify proper system operation and ensures all requirements are met.`).join('\n')}
+
+`).join('\n')}
+
+=== End of Test Document ===

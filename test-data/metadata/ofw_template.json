@@ -1,0 +1,212 @@
+{
+  "version": "1.0.0",
+  "type": "ofw_metadata",
+  "categories": {
+    "custody_logs": {
+      "patterns": {
+        "exchanges": {
+          "description": "Custody exchange events",
+          "fields": [
+            "scheduled_time",
+            "actual_time",
+            "location",
+            "parent_1",
+            "parent_2",
+            "children",
+            "notes"
+          ]
+        },
+        "schedule_changes": {
+          "description": "Custody schedule modifications",
+          "fields": [
+            "original_time",
+            "new_time",
+            "requesting_parent",
+            "response_status",
+            "reason"
+          ]
+        },
+        "violations": {
+          "description": "Schedule or agreement violations",
+          "fields": [
+            "type",
+            "date",
+            "description",
+            "reporting_parent",
+            "response"
+          ]
+        }
+      }
+    },
+    "communication": {
+      "patterns": {
+        "general": {
+          "description": "Regular parent communications",
+          "fields": [
+            "topic",
+            "urgency",
+            "response_required",
+            "response_deadline",
+            "attachments"
+          ]
+        },
+        "expenses": {
+          "description": "Shared expense discussions",
+          "fields": [
+            "expense_type",
+            "amount",
+            "due_date",
+            "split_ratio",
+            "receipt_attached"
+          ]
+        },
+        "medical": {
+          "description": "Medical-related communications",
+          "fields": [
+            "child",
+            "condition",
+            "provider",
+            "appointment_date",
+            "required_action"
+          ]
+        },
+        "education": {
+          "description": "School-related communications",
+          "fields": [
+            "child",
+            "school",
+            "event_type",
+            "date",
+            "required_action"
+          ]
+        }
+      }
+    }
+  },
+  "relationships": {
+    "parents": {
+      "fields": [
+        "name",
+        "email",
+        "primary_custody_days",
+        "exchange_responsibilities"
+      ]
+    },
+    "children": {
+      "fields": [
+        "name",
+        "age",
+        "school",
+        "special_needs",
+        "activities"
+      ]
+    },
+    "schedule": {
+      "regular": {
+        "description": "Regular custody schedule",
+        "fields": [
+          "week_pattern",
+          "exchange_times",
+          "exchange_locations"
+        ]
+      },
+      "holidays": {
+        "description": "Holiday schedule",
+        "fields": [
+          "holiday",
+          "assigned_parent",
+          "start_time",
+          "end_time",
+          "special_conditions"
+        ]
+      },
+      "vacations": {
+        "description": "Vacation schedule",
+        "fields": [
+          "requesting_parent",
+          "dates",
+          "destination",
+          "travel_details",
+          "notification_date"
+        ]
+      }
+    }
+  },
+  "analysis_priorities": {
+    "timeline": {
+      "high_priority_events": [
+        "custody_exchanges",
+        "schedule_changes",
+        "violations",
+        "medical_events"
+      ],
+      "pattern_detection": [
+        "late_exchanges",
+        "cancellation_frequency",
+        "communication_tone",
+        "response_times"
+      ]
+    },
+    "documentation": {
+      "required_attachments": [
+        "medical_records",
+        "expense_receipts",
+        "school_documents",
+        "travel_itineraries"
+      ],
+      "verification_points": [
+        "timestamp_consistency",
+        "parent_responses",
+        "agreement_references",
+        "action_items"
+      ]
+    }
+  },
+  "report_templates": {
+    "custody_compliance": {
+      "sections": [
+        "schedule_adherence",
+        "communication_patterns",
+        "expense_sharing",
+        "documentation_completeness"
+      ],
+      "metrics": [
+        "on_time_percentage",
+        "response_rate",
+        "expense_resolution_time",
+        "documentation_accuracy"
+      ]
+    },
+    "communication_analysis": {
+      "sections": [
+        "topic_frequency",
+        "response_patterns",
+        "tone_analysis",
+        "action_item_completion"
+      ],
+      "metrics": [
+        "average_response_time",
+        "topic_distribution",
+        "sentiment_trends",
+        "completion_rate"
+      ]
+    }
+  },
+  "export_formats": {
+    "timeline": [
+      "chronological",
+      "topic_based",
+      "parent_specific"
+    ],
+    "reports": [
+      "pdf",
+      "html",
+      "json"
+    ],
+    "visualizations": [
+      "calendar_view",
+      "communication_network",
+      "pattern_graphs"
+    ]
+  }
+}

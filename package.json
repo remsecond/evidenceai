@@ -1,0 +1,66 @@
+{
+  "name": "evidenceai",
+  "version": "1.0.0",
+  "description": "AI-powered evidence analysis system",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
+    "test:watch": "node --experimental-vm-modules node_modules/jest/bin/jest.js --watch",
+    "test:pipeline:old": "node --trace-uncaught --trace-warnings --experimental-vm-modules --experimental-specifier-resolution=node scripts/test-pipeline.js",
+    "test:chunking": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/unit/chunking.test.js",
+    "verify:chunking": "node scripts/verify-chunking.js",
+    "monitor:chunking": "node scripts/monitor-chunking.js",
+    "report:chunking": "node scripts/report-chunking.js",
+    "check:size": "node scripts/check-file-size.js",
+    "check:limits": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/unit/token-limits.test.js",
+    "organize:tests": "node scripts/organize-test-data.js",
+    "test:organized": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/fixtures/**/",
+    "generate:tests": "node scripts/generate-test-data.js",
+    "test:pipeline": "npm run generate:tests && npm run organize:tests && npm run test:organized",
+    "prepare": "husky install",
+    "lint:chunking": "eslint --config .eslintrc.chunking.js src/",
+    "audit:chunking": "node scripts/audit-chunking.js",
+    "dashboard:chunking": "node scripts/chunking-dashboard.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^0.1.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "prometheus-client": "^0.5.0",
+    "grafana-dashboards": "^1.0.0"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.2",
+    "husky": "^8.0.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-chunking": "file:tools/eslint-plugin-chunking"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "transform": {},
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ],
+    "setupFilesAfterEnv": [
+      "<rootDir>/tests/setup.js"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": ".husky/pre-commit"
+    }
+  },
+  "eslintConfig": {
+    "extends": [
+      ".eslintrc.chunking.js"
+    ]
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

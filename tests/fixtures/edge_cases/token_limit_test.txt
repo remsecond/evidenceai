@@ -1,0 +1,10 @@
+From: test@example.com
+To: recipient@example.com
+Subject: Token Limit Test (245,988 tokens)
+Date: Thu, 14 Dec 2023 10:00:00 -0800
+
+=== Test Document ===
+
+${Array(983652).fill('A').join('')}
+
+=== End of Test Document ===

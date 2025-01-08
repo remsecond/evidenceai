@@ -1,0 +1,43 @@
+From: parent1@example.com
+To: parent2@example.com
+Subject: Summer Vacation Schedule and Previous Appointments Update
+Date: Thu, 14 Dec 2023 10:30:00 -0500
+
+Hi,
+
+I need to provide an update on several items and discuss the upcoming schedule:
+
+1. Last Week's Doctor Appointment (Dec 7):
+   - Sarah's pediatrician visit went well
+   - Next follow-up scheduled for January 15, 2024
+   - Vaccination records have been updated in the portal
+
+2. This Week's School Events:
+   - Parent-teacher conference completed on Dec 12
+   - Winter concert scheduled for Dec 16 at 3 PM
+   - Need to coordinate pickup after the concert
+
+3. Upcoming Schedule Changes:
+   - This weekend (Dec 16-17): Need to change pickup time to 3pm instead of 2pm due to the concert
+   - Next week (Dec 18-22): Sarah has daily swim practice from 4-5 PM
+   - Christmas Break (Dec 23-Jan 7): Proposed schedule attached
+   - January appointments:
+     * Dental check-up: Jan 10, 2pm
+     * Pediatrician follow-up: Jan 15, 3pm
+     * School counselor meeting: Jan 17, 1pm
+
+4. Previous Schedule Notes:
+   - Thanksgiving weekend exchange worked well
+   - November parent-teacher conference notes are in the portal
+   - October dental appointment records updated
+
+The location for all exchanges will remain the same (Community Center).
+
+Please review and confirm these arrangements, especially the Christmas Break schedule.
+
+Thanks,
+Parent1
+
+---
+Our Family Wizard
+Custody Management Platform

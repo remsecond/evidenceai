@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+
+# Build outputs
+dist/
+build/
+*.pyc
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.vscode/
+.vscode-user/
+.idea/
+*.swp
+*.swo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Testing
+coverage/
+.nyc_output/
+
+# Operating System
+.DS_Store
+Thumbs.db
+
+# Project specific
+test-data/processed/
+sessions/
+output/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
