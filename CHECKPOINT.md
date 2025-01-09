@@ -147,20 +147,36 @@ node test-base-processor.js
 
 ## Latest Improvements
 
-1. Enhanced PDF Processing:
-- Integrated with base document structure
-- Smart participant detection with improved accuracy
-- Rich topic categorization and relationships
-- Validated output format
+1. Enhanced Event Structure:
+- Section summaries with key points extraction
+- Standardized date formats with ISO conversion
+- Rich content annotations and tagging
+- Ambiguity detection and marking
 
 2. Processing Capabilities:
 - Handles 358-page documents in ~1.3 seconds
-- Processes 124,019 words into 940 timeline events
+- Processes 124,019 words into 1276 timeline events
 - Extracts 39 participant relationships
 - Maps 59 topic relationships
 
-3. Relationship Analysis:
-- Participant relationships with context (agreement, dispute, discussion)
+3. Content Analysis:
+- Key point detection:
+  * Decisions (agreed, resolved, approved)
+  * Actions (will, must, needs to)
+  * Deadlines (by, before, due)
+  * Disputes (disagree, contest, object)
+
+4. Content Annotations:
+- Primary type classification (legal, financial, parenting)
+- Importance marking (normal, high)
+- Ambiguity detection with context
+- Content tagging for quick reference
+
+5. Relationship Analysis:
+- Participant relationships with context:
+  * Agreement patterns
+  * Dispute identification
+  * Discussion tracking
 - Topic categorization:
   * Communication (meetings, discussions, messages)
   * Planning (schedules, deadlines, timelines)

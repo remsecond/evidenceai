@@ -23,8 +23,97 @@ export const baseSchema = {
               },
               type: {
                 type: "string",
-                enum: ["message", "document", "event"],
+                enum: ["message", "document", "event", "summary"],
                 description: "Type of timeline event"
+              },
+              key_points: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["type", "content"],
+                  properties: {
+                    type: {
+                      type: "string",
+                      enum: ["decisions", "actions", "deadlines", "disputes"],
+                      description: "Type of key point"
+                    },
+                    content: {
+                      type: "string",
+                      description: "Content of the key point"
+                    }
+                  }
+                },
+                description: "List of key points extracted from the content"
+              },
+              dates: {
+                type: "array",
+                items: {
+                  type: "object",
+                  required: ["original", "iso", "type"],
+                  properties: {
+                    original: {
+                      type: "string",
+                      description: "Original date string from text"
+                    },
+                    iso: {
+                      type: "string",
+                      format: "date-time",
+                      description: "ISO-8601 formatted date"
+                    },
+                    type: {
+                      type: "string",
+                      enum: ["explicit", "relative"],
+                      description: "Type of date reference"
+                    }
+                  }
+                },
+                description: "List of dates extracted from the content"
+              },
+              annotations: {
+                type: "object",
+                properties: {
+                  primary_type: {
+                    type: "string",
+                    enum: ["general", "legal", "financial", "parenting"],
+                    description: "Primary type of content"
+                  },
+                  importance: {
+                    type: "string",
+                    enum: ["normal", "high"],
+                    description: "Importance level of content"
+                  },
+                  context: {
+                    type: ["string", "null"],
+                    description: "Additional context for the content"
+                  },
+                  ambiguities: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      required: ["type", "context"],
+                      properties: {
+                        type: {
+                          type: "string",
+                          enum: ["needs_clarification"],
+                          description: "Type of ambiguity"
+                        },
+                        context: {
+                          type: "string",
+                          description: "Context around the ambiguity"
+                        }
+                      }
+                    },
+                    description: "List of ambiguities in the content"
+                  },
+                  tags: {
+                    type: "array",
+                    items: {
+                      type: "string"
+                    },
+                    description: "Content tags"
+                  }
+                },
+                description: "Content annotations and metadata"
               },
               participants: {
                 type: "array",
