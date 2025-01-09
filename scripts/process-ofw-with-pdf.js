@@ -21,23 +21,31 @@ const pdfParse = (await import('pdf-parse')).default;
 // Configure pdf-parse to not look for test files
 process.env.PDF_TEST_SKIP = 'true';
 
-// Import the proper PDF processor
+// Import processors
 import pdfProcessor from '../src/services/pdf-processor.js';
+import deepseekProcessor from '../src/services/models/deepseek-processor.js';
 
-// Create output directories for each AI model
+// Model processor mapping
+const modelProcessors = {
+    deepseek: deepseekProcessor,
+    base: pdfProcessor
+};
+
+// Get model from command line or default to deepseek
+const model = process.argv[3] || 'deepseek';
+if (!modelProcessors[model]) {
+    console.error(`Unknown model: ${model}. Using base processor.`);
+}
+
+// Create output directory for the selected model
 const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-const aiModels = ['claude', 'deepseek', 'gpt4', 'notebooklm', 'sonnet'];
-const resultsDirs = {};
+const resultsDir = path.join(process.cwd(), 'ai-outputs', model, `ofw-processing-${timestamp}`);
+if (!fs.existsSync(resultsDir)) {
+    fs.mkdirSync(resultsDir, { recursive: true });
+}
 
-aiModels.forEach(model => {
-    resultsDirs[model] = path.join(process.cwd(), 'ai-outputs', model, `ofw-processing-${timestamp}`);
-    if (!fs.existsSync(resultsDirs[model])) {
-        fs.mkdirSync(resultsDirs[model], { recursive: true });
-    }
-});
-
-// Default to deepseek for now, we'll add specific processing for each model later
-const resultsDir = resultsDirs.deepseek;
+// Select processor
+const processor = modelProcessors[model] || modelProcessors.base;
 
 // Process OFW file using proper chunking
 async function processOFWNow() {
@@ -45,7 +53,7 @@ async function processOFWNow() {
         // Get PDF path from command line argument or use default
         const pdfPath = process.argv[2] || path.join(process.cwd(), 'test-data', 'OFW_Messages_Report_Dec.pdf');
         console.log('Processing PDF with enhanced chunking...');
-        const result = await pdfProcessor.processPdf(pdfPath);
+        const result = await processor.processPdf(pdfPath);
         
         // Save extracted text
         console.log('Saving extracted text...');
