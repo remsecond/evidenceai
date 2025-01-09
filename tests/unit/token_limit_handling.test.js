@@ -55,19 +55,52 @@ describe('Token Limit Handling', () => {
 
         const result = await processDocument(content);
 
-        // Verify section headers were preserved
-        expect(result.metadata.structure.sections).toContain('Test Document');
-        expect(result.metadata.structure.sections).toContain('End of Test Document');
+        // Verify chunk structure and metadata
+        const chunks = result.raw_content.chunks;
+        expect(chunks.length).toBeGreaterThan(1);
 
-        // Verify metadata was preserved
-        expect(result.metadata.headers).toEqual(
-            expect.objectContaining({
-                from: 'test@example.com',
-                to: 'recipient@example.com',
-                subject: expect.stringContaining('Token Limit Test'),
-                date: expect.any(String)
-            })
-        );
+        // Check each chunk has proper metadata
+        chunks.forEach((chunk, index) => {
+            expect(chunk.metadata).toEqual(
+                expect.objectContaining({
+                    type: expect.any(String),
+                    section: expect.any(String),
+                    position: index,
+                    total_chunks: chunks.length
+                })
+            );
+        });
+
+        // Verify section continuity
+        let currentSection = '';
+        chunks.forEach((chunk, index) => {
+            if (chunk.metadata.type === 'partial_section' && chunk.metadata.continues) {
+                // Next chunk should continue the same section
+                expect(chunks[index + 1].metadata.section).toBe(chunk.metadata.section);
+            }
+            if (chunk.metadata.section !== currentSection) {
+                // Section transition should be marked appropriately
+                if (currentSection !== '') {
+                    expect(chunks[index - 1].metadata.continues).toBe(false);
+                }
+                currentSection = chunk.metadata.section;
+            }
+        });
+
+        // Verify document structure preservation
+        const allText = chunks.map(c => c.text).join('');
+        expect(allText).toContain('Test Document');
+        expect(allText).toContain('End of Test Document');
+
+        // Verify metadata preservation across chunks
+        const foundHeaders = new Set();
+        chunks.forEach(chunk => {
+            if (chunk.text.includes('From:')) foundHeaders.add('from');
+            if (chunk.text.includes('To:')) foundHeaders.add('to');
+            if (chunk.text.includes('Subject:')) foundHeaders.add('subject');
+            if (chunk.text.includes('Date:')) foundHeaders.add('date');
+        });
+        expect(foundHeaders.size).toBe(4); // All headers were preserved somewhere in the chunks
     });
 
     test('processes chunks in parallel for efficiency', async () => {
@@ -80,7 +113,7 @@ describe('Token Limit Handling', () => {
         const result = await processDocument(content);
         const duration = Date.now() - startTime;
 
-        // Calculate theoretical serial processing time
+        // Calculate and verify processing efficiency
         const serialTime = result.metadata.chunking.chunks.reduce(
             (total, chunk) => total + chunk.processing_time,
             0
@@ -89,13 +122,31 @@ describe('Token Limit Handling', () => {
         // Parallel processing should be significantly faster
         expect(duration).toBeLessThan(serialTime * 0.8); // At least 20% faster
 
-        // Verify parallel efficiency metrics
-        expect(result.metadata.processing_stats.efficiency).toEqual(
+        // Verify efficiency metrics
+        const efficiency = result.metadata.processing_stats.efficiency;
+        expect(efficiency).toEqual(
             expect.objectContaining({
                 parallel_efficiency: expect.any(Number),
-                chunk_efficiency: expect.any(Number)
+                chunk_efficiency: expect.any(Number),
+                overall_efficiency: expect.any(Number)
             })
         );
-        expect(result.metadata.processing_stats.efficiency.parallel_efficiency).toBeGreaterThan(0.5);
+
+        // Verify reasonable efficiency values
+        expect(efficiency.parallel_efficiency).toBeGreaterThan(0.5);
+        expect(efficiency.chunk_efficiency).toBeGreaterThan(0.7);
+        expect(efficiency.overall_efficiency).toBeGreaterThan(0.4);
+
+        // Verify chunk size distribution
+        const chunkSizes = result.raw_content.chunks.map(c => c.estimated_tokens);
+        const avgSize = chunkSizes.reduce((a, b) => a + b, 0) / chunkSizes.length;
+        const maxSize = Math.max(...chunkSizes);
+        
+        // No chunk should exceed the limit
+        expect(maxSize).toBeLessThanOrEqual(150000);
+        
+        // Chunks should be reasonably balanced
+        const sizeVariance = Math.max(...chunkSizes.map(s => Math.abs(s - avgSize)));
+        expect(sizeVariance / avgSize).toBeLessThan(0.3); // Max 30% variance
     });
 });

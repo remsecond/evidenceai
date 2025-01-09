@@ -1,0 +1,159 @@
+{
+  "entities": {
+    "people": [
+      {
+        "name": "John Smith",
+        "type": "person",
+        "attributes": {
+          "role": "parent",
+          "mentions": 2,
+          "email": "john.smith@example.com"
+        },
+        "confidence": 0.95
+      },
+      {
+        "name": "Jane Doe",
+        "type": "person",
+        "attributes": {
+          "role": "parent",
+          "mentions": 1,
+          "email": "jane.doe@example.com"
+        },
+        "confidence": 0.95
+      },
+      {
+        "name": "Tommy",
+        "type": "person",
+        "attributes": {
+          "role": "child",
+          "mentions": 5,
+          "context": ["medical_appointment", "school", "homework"]
+        },
+        "confidence": 0.95
+      },
+      {
+        "name": "Dr. Williams",
+        "type": "person",
+        "attributes": {
+          "role": "medical",
+          "mentions": 1
+        },
+        "confidence": 0.9
+      },
+      {
+        "name": "Ms. Johnson",
+        "type": "person",
+        "attributes": {
+          "role": "education",
+          "mentions": 1
+        },
+        "confidence": 0.9
+      }
+    ],
+    "organizations": [
+      {
+        "name": "Children's Medical Center",
+        "type": "organization",
+        "attributes": {
+          "purpose": "medical_facility",
+          "mentions": 1
+        },
+        "confidence": 0.9
+      }
+    ],
+    "dates": [
+      {
+        "text": "Mon, 15 Jan 2024 09:30:00 -0500",
+        "type": "date",
+        "attributes": {
+          "event": "email_sent",
+          "is_future": false
+        },
+        "confidence": 0.95
+      },
+      {
+        "text": "Tuesday, January 23rd at 2:00 PM",
+        "type": "date",
+        "attributes": {
+          "event": "medical_appointment",
+          "is_future": true,
+          "original_time": "3:00 PM",
+          "requested_time": "1:00 PM"
+        },
+        "confidence": 0.95
+      },
+      {
+        "text": "Thursday, January 25th at 4:30 PM",
+        "type": "date",
+        "attributes": {
+          "event": "parent_teacher_conference",
+          "is_future": true
+        },
+        "confidence": 0.95
+      },
+      {
+        "text": "Wednesday",
+        "type": "date",
+        "attributes": {
+          "event": "homework_due",
+          "is_future": true
+        },
+        "confidence": 0.85
+      }
+    ],
+    "items": [
+      {
+        "text": "math textbook",
+        "type": "item",
+        "attributes": {
+          "context": "homework",
+          "location": "Jane's house"
+        },
+        "confidence": 0.9
+      }
+    ]
+  },
+  "relationships": [
+    {
+      "from": "John Smith",
+      "to": "Tommy",
+      "type": "parent_child",
+      "confidence": 0.95
+    },
+    {
+      "from": "Jane Doe",
+      "to": "Tommy",
+      "type": "parent_child",
+      "confidence": 0.95
+    },
+    {
+      "from": "Dr. Williams",
+      "to": "Tommy",
+      "type": "doctor_patient",
+      "confidence": 0.9
+    },
+    {
+      "from": "Ms. Johnson",
+      "to": "Tommy",
+      "type": "teacher_student",
+      "confidence": 0.9
+    }
+  ],
+  "cross_references": [
+    {
+      "entity": "Tommy",
+      "references": ["he", "his"],
+      "confidence": 0.9
+    }
+  ],
+  "metadata": {
+    "model": "deepseek-entity",
+    "version": "1.0",
+    "processing_time": 245,
+    "confidence_scores": {
+      "entity_extraction": 0.92,
+      "relationship_detection": 0.88,
+      "cross_reference_resolution": 0.85
+    }
+  }
+}

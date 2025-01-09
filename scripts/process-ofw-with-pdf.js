@@ -1,6 +1,11 @@
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+import fs from 'fs';
+import path from 'path';
+import { execSync } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 // First, install pdf-parse
 try {
@@ -10,86 +15,66 @@ try {
     process.exit(1);
 }
 
-const pdfParse = require('pdf-parse');
+// Dynamic import for pdf-parse since it's installed at runtime
+const pdfParse = (await import('pdf-parse')).default;
 
-// Simple function to chunk text
-function chunkText(text, maxChunkSize = 100000) {
-    const chunks = [];
-    let currentChunk = '';
-    
-    // Split into paragraphs
-    const paragraphs = text.split(/\n\s*\n/);
-    
-    for (const paragraph of paragraphs) {
-        if ((currentChunk.length + paragraph.length) > maxChunkSize) {
-            if (currentChunk) chunks.push(currentChunk);
-            currentChunk = paragraph;
-        } else {
-            currentChunk = currentChunk ? `${currentChunk}\n\n${paragraph}` : paragraph;
-        }
+// Configure pdf-parse to not look for test files
+process.env.PDF_TEST_SKIP = 'true';
+
+// Import the proper PDF processor
+import pdfProcessor from '../src/services/pdf-processor.js';
+
+// Create output directories for each AI model
+const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+const aiModels = ['claude', 'deepseek', 'gpt4', 'notebooklm', 'sonnet'];
+const resultsDirs = {};
+
+aiModels.forEach(model => {
+    resultsDirs[model] = path.join(process.cwd(), 'ai-outputs', model, `ofw-processing-${timestamp}`);
+    if (!fs.existsSync(resultsDirs[model])) {
+        fs.mkdirSync(resultsDirs[model], { recursive: true });
     }
-    
-    if (currentChunk) chunks.push(currentChunk);
-    return chunks;
-}
+});
 
-// Process OFW file
+// Default to deepseek for now, we'll add specific processing for each model later
+const resultsDir = resultsDirs.deepseek;
+
+// Process OFW file using proper chunking
 async function processOFWNow() {
     try {
-        // Read the PDF
-        const pdfPath = path.join(process.cwd(), 'test-data', 'OFW_Messages_Report_Dec.pdf');
-        const pdfBuffer = fs.readFileSync(pdfPath);
-        
-        // Parse PDF to text
-        console.log('Parsing PDF...');
-        const data = await pdfParse(pdfBuffer);
-        console.log('PDF parsed successfully');
-        console.log('Text length:', data.text.length);
-        
-        // Create results directory
-        const resultsDir = path.join(process.cwd(), 'test-data', 'results');
-        if (!fs.existsSync(resultsDir)) {
-            fs.mkdirSync(resultsDir, { recursive: true });
-        }
+        // Get PDF path from command line argument or use default
+        const pdfPath = process.argv[2] || path.join(process.cwd(), 'test-data', 'OFW_Messages_Report_Dec.pdf');
+        console.log('Processing PDF with enhanced chunking...');
+        const result = await pdfProcessor.processPdf(pdfPath);
         
         // Save extracted text
         console.log('Saving extracted text...');
         fs.writeFileSync(
             path.join(resultsDir, 'extracted-text.txt'),
-            data.text
+            result.raw_content.text
         );
         
-        // Basic chunking
-        console.log('Chunking text...');
-        const chunks = chunkText(data.text);
-        console.log('Created', chunks.length, 'chunks');
-        
-        // Save chunks
+        // Save chunks with metadata
         console.log('Saving chunks...');
-        chunks.forEach((chunk, index) => {
+        result.raw_content.chunks.forEach((chunk, index) => {
+            const chunkInfo = {
+                text: chunk.text,
+                metadata: chunk.metadata,
+                estimated_tokens: chunk.estimated_tokens
+            };
             fs.writeFileSync(
-                path.join(resultsDir, `chunk-${index + 1}.txt`),
-                chunk
+                path.join(resultsDir, `chunk-${index + 1}.json`),
+                JSON.stringify(chunkInfo, null, 2)
             );
         });
         
-        // Save processing report
+        // Save detailed processing report
         const report = {
             timestamp: new Date().toISOString(),
-            pdfInfo: {
-                pageCount: data.numpages,
-                version: data.info.PDFFormatVersion,
-                metadata: data.metadata,
-                textLength: data.text.length
-            },
-            processing: {
-                chunkCount: chunks.length,
-                chunks: chunks.map((chunk, index) => ({
-                    index: index + 1,
-                    size: chunk.length,
-                    preview: chunk.slice(0, 100) + '...'
-                }))
-            }
+            file_info: result.file_info,
+            structure: result.raw_content.structure,
+            statistics: result.statistics,
+            processing_meta: result.processing_meta
         };
         
         console.log('Saving report...');
@@ -103,7 +88,7 @@ async function processOFWNow() {
     } catch (error) {
         console.error('Error:', error);
         fs.writeFileSync(
-            path.join(process.cwd(), 'test-data', 'error.log'),
+            path.join(resultsDir, 'error.log'),
             `${error.message}\n${error.stack}`
         );
         throw error;
@@ -116,7 +101,7 @@ processOFWNow()
     .then(report => {
         console.log('Success! Report:', JSON.stringify(report, null, 2));
         fs.writeFileSync(
-            path.join(process.cwd(), 'test-data', 'success.log'),
+            path.join(resultsDir, 'success.log'),
             JSON.stringify(report, null, 2)
         );
     })

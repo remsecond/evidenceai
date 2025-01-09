@@ -1,0 +1,21 @@
+{
+  "original_name": "test_data_report.json",
+  "size_bytes": 2737,
+  "characters": 2737,
+  "estimated_tokens": 685,
+  "validation": {
+    "sizeBytes": 2737,
+    "sizeMB": 0.0026102066040039062,
+    "category": "single_chunk",
+    "estimatedTokens": 685,
+    "estimatedChunks": 1,
+    "guidance": "File can be processed in a single chunk",
+    "canProcess": true,
+    "metrics": {
+      "tokensPerChunk": 685,
+      "estimatedProcessingTime": 5000
+    }
+  },
+  "processing_date": "2025-01-08T02:12:39.434Z",
+  "category": "small"
+}

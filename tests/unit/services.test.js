@@ -11,7 +11,7 @@ process.env.DEEPSEEK_ENABLED = 'false';
 process.env.GPT4_ENABLED = 'false';
 
 // Mock MCP tools
-jest.mock('../../src/utils/mcp.js', () => ({
+jest.mock('../../src/utils/mcp', () => ({
     use_mcp_tool: jest.fn().mockImplementation(async ({ server_name, tool_name, arguments: args }) => {
         if (server_name === 'sequential-thinking' && tool_name === 'validate_analysis') {
             return {
@@ -43,7 +43,39 @@ jest.mock('../../src/utils/mcp.js', () => ({
                 ]
             };
         }
-        if (server_name === 'deepseek' && tool_name === 'extract_entities') {
+        if (server_name === 'deepseek' && tool_name === 'generate_text') {
+            return {
+                text: "Generated text response for testing",
+                metadata: {
+                    model: "deepseek",
+                    tokens: 150,
+                    processing_time: 250
+                }
+            };
+        }
+        else if (server_name === 'deepseek' && tool_name === 'analyze_structured') {
+            return {
+                patterns: [
+                    {
+                        type: "communication_flow",
+                        description: "Sequential communication with clear intent",
+                        confidence: 0.9
+                    }
+                ],
+                topics: [
+                    {
+                        name: "custody_exchange",
+                        confidence: 0.95
+                    }
+                ],
+                metadata: {
+                    confidence: 0.9,
+                    focus: "general",
+                    processing_time: 350
+                }
+            };
+        }
+        else if (server_name === 'deepseek' && tool_name === 'extract_entities') {
             return {
                 entities: {
                     people: [
@@ -481,3 +513,23 @@ describe('Entity Extraction', () => {
         expect(mention).toHaveProperty('position');
         expect(mention).toHaveProperty('confidence');
 
+        // Verify relationships
+        expect(result.relationships[0]).toHaveProperty('from');
+        expect(result.relationships[0]).toHaveProperty('to');
+        expect(result.relationships[0]).toHaveProperty('type');
+        expect(result.relationships[0]).toHaveProperty('mentions');
+        expect(result.relationships[0]).toHaveProperty('attributes');
+        expect(result.relationships[0]).toHaveProperty('confidence');
+
+        // Verify cross references
+        expect(result.cross_references[0]).toHaveProperty('entities');
+        expect(result.cross_references[0]).toHaveProperty('context');
+        expect(result.cross_references[0]).toHaveProperty('type');
+        expect(result.cross_references[0]).toHaveProperty('confidence');
+
+        // Verify metadata
+        expect(result.metadata).toHaveProperty('model', 'deepseek');
+        expect(result.metadata).toHaveProperty('version');
+        expect(result.metadata).toHaveProperty('confidence_scores');
+    });
+});

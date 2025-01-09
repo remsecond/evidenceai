@@ -1,4 +1,6 @@
 import { jest } from '@jest/globals';
+import fs from 'fs';
+import path from 'path';
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
@@ -12,9 +14,6 @@ process.env.DEEPSEEK_ENABLED = 'false';
 process.env.GPT4_ENABLED = 'false';
 
 // Create mock directories that our app expects to exist
-import fs from 'fs';
-import path from 'path';
-
 const dirs = [
     'logs',
     'uploads',
@@ -24,6 +23,7 @@ const dirs = [
     'ai-outputs/deepseek',
     'ai-outputs/gpt4'
 ];
+
 dirs.forEach(dir => {
     const dirPath = path.join(process.cwd(), dir);
     if (!fs.existsSync(dirPath)) {
@@ -41,7 +41,7 @@ global.console = {
     log: jest.fn(),
     // Keep error and warn for debugging
     error: console.error,
-    warn: console.warn,
+    warn: console.warn
 };
 
 // Clean up function to run after each test
@@ -50,20 +50,37 @@ afterEach(() => {
     jest.clearAllMocks();
 });
 
+// Recursive function to safely remove directory contents
+function cleanDirectory(dirPath) {
+    if (fs.existsSync(dirPath)) {
+        const files = fs.readdirSync(dirPath);
+        files.forEach(file => {
+            const fullPath = path.join(dirPath, file);
+            if (fs.lstatSync(fullPath).isDirectory()) {
+                cleanDirectory(fullPath);
+                try {
+                    fs.rmdirSync(fullPath);
+                } catch (error) {
+                    console.warn(`Warning: Could not remove directory ${fullPath}`, error);
+                }
+            } else {
+                try {
+                    fs.unlinkSync(fullPath);
+                } catch (error) {
+                    console.warn(`Warning: Could not remove file ${fullPath}`, error);
+                }
+            }
+        });
+    }
+}
+
 // Clean up function to run after all tests
 afterAll(() => {
     // Clean up test directories if needed
     if (process.env.NODE_ENV === 'test') {
         dirs.forEach(dir => {
             const dirPath = path.join(process.cwd(), dir);
-            if (fs.existsSync(dirPath)) {
-                // Only remove contents, not the directory itself
-                const files = fs.readdirSync(dirPath);
-                files.forEach(file => {
-                    const filePath = path.join(dirPath, file);
-                    fs.unlinkSync(filePath);
-                });
-            }
+            cleanDirectory(dirPath);
         });
     }
 
@@ -81,7 +98,7 @@ aiOutputDirs.forEach(dir => {
     const outputDir = path.join(process.cwd(), 'ai-outputs', dir);
     const inputDir = path.join(outputDir, 'input');
     const outputSubDir = path.join(outputDir, 'output');
-    
+
     [outputDir, inputDir, outputSubDir].forEach(d => {
         if (!fs.existsSync(d)) {
             fs.mkdirSync(d, { recursive: true });

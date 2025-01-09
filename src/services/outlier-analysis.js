@@ -7,6 +7,7 @@ import { use_mcp_tool } from '../utils/mcp.js';
 export async function analyzeOutliers(text, context = {}) {
     try {
         console.log('[INFO] Starting outlier analysis');
+        const startTime = Date.now();
 
         // Use unified AI service with chunking
         const aiResult = await analyzeText(text, {
@@ -15,15 +16,15 @@ export async function analyzeOutliers(text, context = {}) {
         });
         console.log('[DEBUG] AI analysis complete');
 
-        const baseAnalysis = aiResult.semantic;
-        const validationResult = aiResult.validation;
+        const structuredData = aiResult.structured_data;
+        const analysis = aiResult.analysis;
 
         // Extract outliers
         const outliers = [];
 
         // Check for semantic outliers
-        if (baseAnalysis.key_points) {
-            baseAnalysis.key_points.forEach(point => {
+        if (structuredData.key_points) {
+            structuredData.key_points.forEach(point => {
                 if (point.importance > 0.8) {
                     outliers.push({
                         type: 'semantic_importance',
@@ -36,8 +37,8 @@ export async function analyzeOutliers(text, context = {}) {
         }
 
         // Check for pattern outliers
-        if (baseAnalysis.initial_patterns) {
-            baseAnalysis.initial_patterns.forEach(pattern => {
+        if (analysis.patterns) {
+            analysis.patterns.forEach(pattern => {
                 if (pattern.confidence > 0.8) {
                     outliers.push({
                         type: 'pattern_significance',
@@ -50,13 +51,13 @@ export async function analyzeOutliers(text, context = {}) {
         }
 
         // Check for validation outliers
-        if (validationResult.valid_patterns) {
-            validationResult.valid_patterns.forEach(pattern => {
-                if (!baseAnalysis.initial_patterns.some(p => p.type === pattern)) {
+        if (analysis.metadata?.validation?.patterns) {
+            analysis.metadata.validation.patterns.forEach(pattern => {
+                if (!analysis.patterns.some(p => p.type === pattern)) {
                     outliers.push({
                         type: 'pattern_mismatch',
                         pattern,
-                        confidence: validationResult.confidence_scores.patterns
+                        confidence: analysis.metadata.validation.confidence || 0.7
                     });
                 }
             });
@@ -87,16 +88,21 @@ export async function analyzeOutliers(text, context = {}) {
             metadata: {
                 total_outliers: outliers.length,
                 confidence_scores: {
-                    semantic: baseAnalysis.confidence || 0.7,
-                    patterns: validationResult.confidence_scores.patterns,
+                    semantic: analysis.metadata?.confidence || 0.7,
+                    patterns: analysis.metadata?.validation?.confidence || 0.7,
                     overall: calculateOverallConfidence(outliers)
                 },
                 chunking: {
                     enabled: true,
-                    analysis_chunks: aiResult.metadata?.chunk_count || 1,
-                    pattern_chunks: patternResult.metadata?.chunk_count || 1,
-                    total_chunks: (aiResult.metadata?.chunk_count || 1) + 
-                                (patternResult.metadata?.chunk_count || 1)
+                    analysis_chunks: aiResult.metadata?.chunks || 1,
+                    pattern_chunks: patternResult.metadata?.chunks || 1,
+                    total_chunks: (aiResult.metadata?.chunks || 1) + 
+                                (patternResult.metadata?.chunks || 1)
+                },
+                processing_stats: {
+                    total_tokens_processed: aiResult.metadata?.total_tokens || 0,
+                    avg_chunk_size: aiResult.metadata?.avg_chunk_size || 0,
+                    processing_time: Date.now() - startTime
                 }
             }
         };

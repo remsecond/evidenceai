@@ -1,0 +1,21 @@
+{
+  "original_name": "sample_email.eml",
+  "size_bytes": 1474,
+  "characters": 1474,
+  "estimated_tokens": 369,
+  "validation": {
+    "sizeBytes": 1474,
+    "sizeMB": 0.0014057159423828125,
+    "category": "single_chunk",
+    "estimatedTokens": 369,
+    "estimatedChunks": 1,
+    "guidance": "File can be processed in a single chunk",
+    "canProcess": true,
+    "metrics": {
+      "tokensPerChunk": 369,
+      "estimatedProcessingTime": 5000
+    }
+  },
+  "processing_date": "2025-01-08T02:12:39.366Z",
+  "category": "emails"
+}

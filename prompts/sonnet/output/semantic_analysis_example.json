@@ -1,0 +1,97 @@
+{
+  "key_points": [
+    {
+      "text": "Request for custody schedule modification due to medical appointment",
+      "importance": 0.95,
+      "context": "schedule_change",
+      "attributes": {
+        "type": "primary_request",
+        "urgency": "high",
+        "requires_response": true
+      }
+    },
+    {
+      "text": "Medical appointment for Tommy on Tuesday, January 23rd at 2:00 PM",
+      "importance": 0.9,
+      "context": "medical",
+      "attributes": {
+        "location": "Children's Medical Center",
+        "attendees": ["both parents", "Dr. Williams"]
+      }
+    },
+    {
+      "text": "Request to change pickup time from 3:00 PM to 1:00 PM",
+      "importance": 0.9,
+      "context": "schedule_change",
+      "attributes": {
+        "original_time": "3:00 PM",
+        "requested_time": "1:00 PM",
+        "reason": "medical_appointment"
+      }
+    },
+    {
+      "text": "Parent-teacher conference scheduled for Thursday, January 25th at 4:30 PM",
+      "importance": 0.85,
+      "context": "education",
+      "attributes": {
+        "topic": "academic_progress",
+        "attendees": ["both parents", "Ms. Johnson"]
+      }
+    },
+    {
+      "text": "Tommy's math textbook left at Jane's house, homework due Wednesday",
+      "importance": 0.8,
+      "context": "education",
+      "attributes": {
+        "item": "math textbook",
+        "deadline": "Wednesday",
+        "action_required": true
+      }
+    }
+  ],
+  "summary": "Email requesting custody schedule modification for Tommy's medical appointment, including time change request and notification of upcoming parent-teacher conference. Additional request for math textbook return.",
+  "initial_patterns": [
+    {
+      "type": "temporal_sequence",
+      "description": "Sequential events with specific times",
+      "confidence": 0.9
+    },
+    {
+      "type": "request_pattern",
+      "description": "Primary request with fallback option",
+      "confidence": 0.85
+    },
+    {
+      "type": "coordination_pattern",
+      "description": "Multiple events requiring parental coordination",
+      "confidence": 0.9
+    }
+  ],
+  "tone_analysis": {
+    "primary": "professional",
+    "secondary": "cooperative",
+    "formality_level": "formal",
+    "politeness": "high",
+    "urgency": "moderate",
+    "confidence": 0.85
+  },
+  "communication_style": {
+    "approach": "direct",
+    "structure": "organized",
+    "clarity": "high",
+    "consideration": "thoughtful",
+    "confidence": 0.9
+  },
+  "metadata": {
+    "document_type": "custody_communication",
+    "primary_purpose": "schedule_modification",
+    "secondary_purposes": [
+      "medical_coordination",
+      "education_coordination",
+      "item_retrieval"
+    ],
+    "time_sensitivity": "high",
+    "response_required": true,
+    "confidence": 0.95
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "original_name": "test_4.8mb.txt",
+  "size_bytes": 60400,
+  "characters": 60400,
+  "estimated_tokens": 15100,
+  "validation": {
+    "sizeBytes": 60400,
+    "sizeMB": 0.0576019287109375,
+    "category": "single_chunk",
+    "estimatedTokens": 15100,
+    "estimatedChunks": 1,
+    "guidance": "File can be processed in a single chunk",
+    "canProcess": true,
+    "metrics": {
+      "tokensPerChunk": 15100,
+      "estimatedProcessingTime": 5000
+    }
+  },
+  "processing_date": "2025-01-08T02:12:39.414Z",
+  "category": "small"
+}

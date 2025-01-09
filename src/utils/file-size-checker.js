@@ -24,9 +24,16 @@ export const PROCESSING_CATEGORIES = {
  * Check file size and provide processing guidance
  */
 export function checkFileSize(sizeInBytes) {
-    const sizeMB = sizeInBytes / (1024 * 1024);
-    const estimatedTokens = Math.ceil(sizeInBytes / 4);
-    const estimatedChunks = Math.ceil(sizeInBytes / SIZE_LIMITS.SINGLE_CHUNK);
+    // Ensure sizeInBytes is a number
+    const size = typeof sizeInBytes === 'string' ? parseInt(sizeInBytes, 10) : sizeInBytes;
+    if (isNaN(size)) {
+        logger.error('Invalid size input:', { sizeInBytes });
+        throw new Error('Invalid size input');
+    }
+
+    const sizeMB = size / (1024 * 1024);
+    const estimatedTokens = Math.ceil(size / 4);
+    const estimatedChunks = Math.ceil(size / SIZE_LIMITS.SINGLE_CHUNK);
 
     let category;
     let guidance;

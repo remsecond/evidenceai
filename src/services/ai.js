@@ -1,4 +1,17 @@
 import { use_mcp_tool } from '../utils/mcp.js';
+import { getLogger } from '../utils/logging.js';
+
+const logger = getLogger();
+
+export async function setupAI() {
+    try {
+        logger.info('AI service initialized');
+        return true;
+    } catch (error) {
+        logger.error('Failed to initialize AI service', { error });
+        throw new Error('Failed to initialize AI service');
+    }
+}
 
 // Maximum tokens per chunk (leaving room for output)
 const MAX_CHUNK_SIZE = 150000; // 150k tokens for input to leave 50k for output
@@ -79,53 +92,49 @@ export async function analyzeText(text, options = {}) {
     try {
         console.log('[INFO] Starting AI text analysis');
 
-        // Split text into chunks
-        const chunks = chunkText(text);
-        console.log(`[INFO] Split text into ${chunks.length} chunks`);
+        // Split text into chunks if needed
+        const chunks = text.length > MAX_CHUNK_SIZE ? chunkText(text) : [text];
+        console.log(`[INFO] Processing ${chunks.length} chunks`);
 
-        // Process each chunk
-        const chunkResults = await Promise.all(chunks.map(async (chunk, index) => {
-            console.log(`[INFO] Processing chunk ${index + 1}/${chunks.length}`);
-            
-            // Extract key information using MCP tools
-            const semanticAnalysis = await use_mcp_tool({
+        // First pass: Basic preprocessing
+        const structuredData = await Promise.all(chunks.map(async chunk => {
+            const result = await use_mcp_tool({
                 server_name: 'chatsum',
                 tool_name: 'analyze',
-                arguments: { text: chunk }
-            });
-        console.log('[DEBUG] Semantic analysis:', semanticAnalysis);
-
-            // Validate analysis with sequential thinking
-            const validationResult = await use_mcp_tool({
-                server_name: 'sequential-thinking',
-                tool_name: 'validate_analysis',
-                arguments: {
-                    analysis: semanticAnalysis,
-                    context: { ...options, chunk_index: index }
+                arguments: { 
+                    text: chunk,
+                    mode: 'structure' // Just extract structure and key points
                 }
             });
-        console.log('[DEBUG] Validation result:', validationResult);
-
-            // Extract entities and relationships
-            const entityAnalysis = await use_mcp_tool({
-                server_name: 'deepseek',
-                tool_name: 'extract_entities',
-                arguments: { text: chunk }
-            });
-        console.log('[DEBUG] Entity analysis:', entityAnalysis);
-
-            return {
-                semantic: semanticAnalysis,
-                validation: validationResult,
-                entities: entityAnalysis
-            };
+            return result;
         }));
 
-        // Merge results from all chunks
-        const result = mergeChunkResults(chunkResults);
+        // Combine chunk results
+        const combinedData = structuredData.reduce((acc, curr) => ({
+            content: acc.content.concat(curr.content || []),
+            key_points: acc.key_points.concat(curr.key_points || []),
+            dates: acc.dates.concat(curr.dates || []),
+            entities: acc.entities.concat(curr.entities || [])
+        }), { content: [], key_points: [], dates: [], entities: [] });
 
-        console.log('[INFO] AI analysis complete');
-        return result;
+        // Second pass: Focused analysis on structured data
+        const analysis = await use_mcp_tool({
+            server_name: 'deepseek',
+            tool_name: 'analyze_structured',
+            arguments: {
+                data: combinedData,
+                focus: options.focus || 'general'
+            }
+        });
+
+        return {
+            structured_data: combinedData,
+            analysis: analysis,
+            metadata: {
+                chunks: chunks.length,
+                processing_time: Date.now()
+            }
+        };
 
     } catch (error) {
         console.error('[ERROR] Error in AI analysis:', error);
@@ -168,6 +177,34 @@ function mergeChunkResults(chunkResults) {
                     relationship_detection: average(chunkResults.map(r => r.entities.metadata.confidence_scores.relationship_detection)),
                     cross_reference_resolution: average(chunkResults.map(r => r.entities.metadata.confidence_scores.cross_reference_resolution))
                 }
+            }
+        },
+        timeline: {
+            events: chunkResults.flatMap(r => r.timeline.events || []).sort((a, b) => {
+                return new Date(a.timestamp) - new Date(b.timestamp);
+            }),
+            metadata: {
+                total_events: chunkResults.reduce((acc, r) => acc + (r.timeline.events?.length || 0), 0),
+                confidence: average(chunkResults.map(r => r.timeline.metadata?.confidence || 0))
+            }
+        },
+        complex: {
+            patterns: Array.from(new Set(chunkResults.flatMap(r => r.complex.patterns || []))),
+            tone: {
+                overall: chunkResults.reduce((acc, r) => {
+                    if (!r.complex.tone?.overall) return acc;
+                    return {
+                        sentiment: r.complex.tone.overall.sentiment,
+                        intensity: (acc?.intensity || 0) + r.complex.tone.overall.intensity
+                    };
+                }, null),
+                segments: chunkResults.flatMap(r => r.complex.tone?.segments || []).sort((a, b) => {
+                    return new Date(a.timestamp) - new Date(b.timestamp);
+                })
+            },
+            metadata: {
+                confidence: average(chunkResults.map(r => r.complex.metadata?.confidence || 0)),
+                pattern_count: chunkResults.reduce((acc, r) => acc + (r.complex.patterns?.length || 0), 0)
             }
         }
     };
@@ -221,162 +258,298 @@ function mergeRelationships(relationshipLists) {
  * Calculate average of numbers
  */
 function average(numbers) {
+    if (numbers.length === 0) return 0;
     return numbers.reduce((a, b) => a + b, 0) / numbers.length;
 }
 
 /**
- * Generate text using AI models
+ * Analyze complex patterns in text
  */
-export async function generateText(prompt, options = {}) {
+export async function analyzeComplex(text, context = {}) {
     try {
-        console.log('[INFO] Starting AI text generation');
+        logger.info('Starting complex pattern analysis');
+        
+        // Extract timeline events first for context
+        const timelineAnalysis = await use_mcp_tool({
+            server_name: 'sequential-thinking',
+            tool_name: 'extract_timeline',
+            arguments: { text }
+        });
 
-        // Check if prompt needs chunking
-        const chunks = chunkText(prompt);
-        console.log(`[INFO] Split prompt into ${chunks.length} chunks`);
-
-        if (chunks.length === 1) {
-            // Single chunk, process directly
-            const modelName = options.model || 'gpt4';
-            const result = await use_mcp_tool({
-                server_name: modelName,
-                tool_name: 'generate',
-                arguments: {
-                    prompt: chunks[0],
-                    ...options
+        // Analyze complex patterns with timeline context
+        const complexAnalysis = await use_mcp_tool({
+            server_name: 'deepseek',
+            tool_name: 'analyze_patterns',
+            arguments: { 
+                text,
+                context: {
+                    ...context,
+                    timeline: timelineAnalysis
                 }
-            });
-
-            console.log('[INFO] Text generation complete');
-            return result;
-        }
-
-        // For multiple chunks, we need to handle them sequentially
-        // and maintain context between generations
-        const modelName = options.model || 'gpt4';
-        let context = '';
-        let finalResult = '';
-
-        for (let i = 0; i < chunks.length; i++) {
-            console.log(`[INFO] Processing chunk ${i + 1}/${chunks.length}`);
-            
-            const result = await use_mcp_tool({
-                server_name: modelName,
-                tool_name: 'generate',
-                arguments: {
-                    prompt: chunks[i],
-                    context,
-                    ...options,
-                    is_chunk: true,
-                    chunk_index: i,
-                    total_chunks: chunks.length
-                }
-            });
-
-            // Update context for next chunk
-            context = result.text;
-            finalResult += result.text;
-        }
-
-        // Generate final completion to ensure coherence
-        const finalCompletion = await use_mcp_tool({
-            server_name: modelName,
-            tool_name: 'generate',
-            arguments: {
-                prompt: finalResult,
-                ...options,
-                is_final: true
             }
         });
 
-        console.log('[INFO] Text generation complete');
         return {
-            text: finalCompletion.text,
-            tokens: finalCompletion.tokens,
-            model: finalCompletion.model,
-            chunk_count: chunks.length
+            patterns: complexAnalysis.patterns || [],
+            tone: complexAnalysis.tone || {
+                overall: { sentiment: 'neutral', intensity: 0 },
+                segments: []
+            },
+            metadata: {
+                confidence: complexAnalysis.metadata?.confidence || 0,
+                pattern_count: complexAnalysis.patterns?.length || 0
+            }
         };
-
     } catch (error) {
-        console.error('[ERROR] Error in text generation:', error);
+        logger.error('Error in complex analysis:', error);
         throw error;
     }
 }
 
 /**
- * Summarize text using AI models
+ * Analyze semantic aspects of text
  */
-export async function summarizeText(text, options = {}) {
+export async function analyzeSemantic(text, options = {}) {
     try {
-        console.log('[INFO] Starting text summarization');
+        logger.info('Starting semantic analysis');
 
-        // Split text into chunks if needed
-        const chunks = chunkText(text);
-        console.log(`[INFO] Split text into ${chunks.length} chunks`);
-
-        if (chunks.length === 1) {
-            // Single chunk, process directly
-            const result = await use_mcp_tool({
-                server_name: 'chatsum',
-                tool_name: 'summarize',
-                arguments: {
-                    text: chunks[0],
-                    ...options
-                }
-            });
-            console.log('[INFO] Text summarization complete');
-            return result;
-        }
-
-        // Process each chunk
-        const chunkSummaries = await Promise.all(chunks.map(async (chunk, index) => {
-            console.log(`[INFO] Summarizing chunk ${index + 1}/${chunks.length}`);
-            
-            const result = await use_mcp_tool({
-                server_name: 'chatsum',
-                tool_name: 'summarize',
-                arguments: {
-                    text: chunk,
-                    ...options,
-                    is_chunk: true,
-                    chunk_index: index,
-                    total_chunks: chunks.length
-                }
-            });
-            return result;
-        }));
-
-        // Merge chunk summaries
-        const combinedSummary = chunkSummaries.map(s => s.summary).join(' ');
-        
-        // Generate final summary of combined summaries
-        const finalResult = await use_mcp_tool({
+        // Extract key information using MCP tools
+        const semanticAnalysis = await use_mcp_tool({
             server_name: 'chatsum',
-            tool_name: 'summarize',
+            tool_name: 'analyze',
+            arguments: { text }
+        });
+
+        // Validate analysis with sequential thinking
+        const validationResult = await use_mcp_tool({
+            server_name: 'sequential-thinking',
+            tool_name: 'validate_analysis',
             arguments: {
-                text: combinedSummary,
-                ...options,
-                is_final: true
+                analysis: semanticAnalysis,
+                context: options
             }
         });
 
-        console.log('[INFO] Text summarization complete');
         return {
-            summary: finalResult.summary,
-            length: finalResult.length,
-            sentence_count: finalResult.sentence_count,
-            confidence: average(chunkSummaries.map(s => s.confidence)),
-            chunk_count: chunks.length
+            key_points: semanticAnalysis.key_points,
+            summary: semanticAnalysis.summary,
+            initial_patterns: semanticAnalysis.initial_patterns,
+            confidence: semanticAnalysis.confidence,
+            validation: {
+                valid_topics: validationResult.valid_topics,
+                valid_patterns: validationResult.valid_patterns,
+                confidence_scores: validationResult.confidence_scores
+            }
         };
-
     } catch (error) {
-        console.error('[ERROR] Error in text summarization:', error);
+        logger.error('Error in semantic analysis:', error);
+        throw error;
+    }
+}
+
+/**
+ * Analyze document with comprehensive analysis
+ */
+export async function analyzeDocument(text, options = {}) {
+    try {
+        logger.info('Starting document analysis');
+
+        // Run semantic analysis first
+        const semanticResult = await analyzeSemantic(text, options);
+
+        // Extract entities and relationships
+        const entityAnalysis = await use_mcp_tool({
+            server_name: 'deepseek',
+            tool_name: 'extract_entities',
+            arguments: { text }
+        });
+
+        // Extract timeline events
+        const timelineAnalysis = await use_mcp_tool({
+            server_name: 'sequential-thinking',
+            tool_name: 'extract_timeline',
+            arguments: { text }
+        });
+
+        // Run complex pattern analysis
+        const complexResult = await analyzeComplex(text, {
+            ...options,
+            semantic: semanticResult,
+            timeline: timelineAnalysis
+        });
+
+        return {
+            semantic: semanticResult,
+            entities: entityAnalysis,
+            timeline: timelineAnalysis,
+            complex: complexResult,
+            metadata: {
+                processing_time: Date.now(),
+                confidence_scores: {
+                    semantic: semanticResult.confidence,
+                    entities: entityAnalysis.metadata.confidence_scores.entity_extraction,
+                    timeline: timelineAnalysis.metadata.confidence,
+                    complex: complexResult.metadata.confidence
+                }
+            }
+        };
+    } catch (error) {
+        logger.error('Error in document analysis:', error);
+        throw error;
+    }
+}
+
+/**
+ * Analyze timeline events in text
+ */
+export async function analyzeTimeline(text, options = {}) {
+    try {
+        logger.info('Starting timeline analysis');
+
+        // Extract timeline events
+        const timelineAnalysis = await use_mcp_tool({
+            server_name: 'sequential-thinking',
+            tool_name: 'extract_timeline',
+            arguments: { text }
+        });
+
+        // Validate and enrich timeline
+        const validationResult = await use_mcp_tool({
+            server_name: 'sequential-thinking',
+            tool_name: 'validate_analysis',
+            arguments: {
+                analysis: timelineAnalysis,
+                context: options
+            }
+        });
+
+        return {
+            events: timelineAnalysis.events || [],
+            metadata: {
+                total_events: timelineAnalysis.events?.length || 0,
+                confidence: timelineAnalysis.metadata?.confidence || 0,
+                validation: validationResult
+            }
+        };
+    } catch (error) {
+        logger.error('Error in timeline analysis:', error);
+        throw error;
+    }
+}
+
+/**
+ * Generate text based on input and context
+ */
+export async function generateText(input, options = {}) {
+    try {
+        logger.info('Starting text generation');
+
+        // Generate text using deepseek
+        const generationResult = await use_mcp_tool({
+            server_name: 'deepseek',
+            tool_name: 'generate_text',
+            arguments: { 
+                input,
+                ...options
+            }
+        });
+
+        // Validate generated text
+        const validationResult = await use_mcp_tool({
+            server_name: 'sequential-thinking',
+            tool_name: 'validate_analysis',
+            arguments: {
+                analysis: {
+                    text: generationResult.text,
+                    metadata: generationResult.metadata
+                },
+                context: options
+            }
+        });
+
+        return {
+            text: generationResult.text,
+            metadata: {
+                ...generationResult.metadata,
+                validation: validationResult
+            }
+        };
+    } catch (error) {
+        logger.error('Error in text generation:', error);
+        throw error;
+    }
+}
+
+/**
+ * Extract deep entities from text
+ */
+export async function extractDeepEntities(text, options = {}) {
+    try {
+        logger.info('Starting deep entity extraction');
+
+        const entityAnalysis = await use_mcp_tool({
+            server_name: 'deepseek',
+            tool_name: 'extract_entities',
+            arguments: { 
+                text,
+                ...options
+            }
+        });
+
+        return {
+            entities: entityAnalysis.entities || {},
+            relationships: entityAnalysis.relationships || [],
+            cross_references: entityAnalysis.cross_references || [],
+            metadata: entityAnalysis.metadata || {
+                confidence_scores: {
+                    entity_extraction: 0,
+                    relationship_detection: 0,
+                    cross_reference_resolution: 0
+                }
+            }
+        };
+    } catch (error) {
+        logger.error('Error in deep entity extraction:', error);
+        throw error;
+    }
+}
+
+/**
+ * Summarize text content
+ */
+export async function summarizeText(text, options = {}) {
+    try {
+        logger.info('Starting text summarization');
+
+        const summaryResult = await use_mcp_tool({
+            server_name: 'chatsum',
+            tool_name: 'summarize',
+            arguments: { 
+                text,
+                ...options
+            }
+        });
+
+        return {
+            summary: summaryResult.summary,
+            length: summaryResult.length,
+            sentence_count: summaryResult.sentence_count,
+            confidence: summaryResult.confidence
+        };
+    } catch (error) {
+        logger.error('Error in text summarization:', error);
         throw error;
     }
 }
 
 export default {
     analyzeText,
+    setupAI,
+    analyzeComplex,
+    analyzeSemantic,
+    analyzeDocument,
+    analyzeTimeline,
     generateText,
+    extractDeepEntities,
     summarizeText
 };

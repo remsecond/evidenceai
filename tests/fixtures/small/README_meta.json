@@ -1,0 +1,21 @@
+{
+  "original_name": "README.md",
+  "size_bytes": 546,
+  "characters": 546,
+  "estimated_tokens": 137,
+  "validation": {
+    "sizeBytes": 546,
+    "sizeMB": 0.0005207061767578125,
+    "category": "single_chunk",
+    "estimatedTokens": 137,
+    "estimatedChunks": 1,
+    "guidance": "File can be processed in a single chunk",
+    "canProcess": true,
+    "metrics": {
+      "tokensPerChunk": 137,
+      "estimatedProcessingTime": 5000
+    }
+  },
+  "processing_date": "2025-01-08T02:12:39.357Z",
+  "category": "small"
+}

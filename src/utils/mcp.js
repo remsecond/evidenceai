@@ -112,6 +112,27 @@ function mockSequentialThinkingResult(tool, args) {
                     patterns: 0.85
                 }
             };
+        case 'extract_timeline':
+            return {
+                events: [
+                    {
+                        timestamp: '2024-01-15T10:30:00Z',
+                        description: 'Parent1 requests schedule change',
+                        type: 'communication',
+                        confidence: 0.95
+                    },
+                    {
+                        timestamp: '2024-01-15T11:45:00Z',
+                        description: 'Parent2 acknowledges request',
+                        type: 'communication',
+                        confidence: 0.95
+                    }
+                ],
+                metadata: {
+                    confidence: 0.9,
+                    source: 'communication_log'
+                }
+            };
         default:
             throw new Error(`Unknown Sequential Thinking tool: ${tool}`);
     }
@@ -158,7 +179,7 @@ function mockDeepseekResult(tool, args) {
                     ],
                     dates: [
                         {
-                            text: 'Tuesday, January 23rd',
+                            text: 'Tuesday January 23rd',
                             type: 'date',
                             attributes: {
                                 event: 'medical_appointment',
@@ -191,6 +212,70 @@ function mockDeepseekResult(tool, args) {
                         entity_extraction: 0.9,
                         relationship_detection: 0.85,
                         cross_reference_resolution: 0.8
+                    }
+                }
+            };
+        case 'analyze_patterns':
+            return {
+                patterns: [
+                    {
+                        type: 'communication_pattern',
+                        description: 'Formal request and acknowledgment',
+                        confidence: 0.9
+                    },
+                    {
+                        type: 'tone_pattern',
+                        description: 'Professional and cooperative',
+                        confidence: 0.85
+                    }
+                ],
+                tone: {
+                    overall: {
+                        sentiment: 'neutral',
+                        intensity: 0.3
+                    },
+                    segments: [
+                        {
+                            timestamp: '2024-01-15T10:30:00Z',
+                            sentiment: 'neutral',
+                            intensity: 0.3
+                        },
+                        {
+                            timestamp: '2024-01-15T11:45:00Z',
+                            sentiment: 'positive',
+                            intensity: 0.4
+                        }
+                    ]
+                },
+                metadata: {
+                    confidence: 0.88,
+                    processing_time: 180
+                }
+            };
+        case 'analyze_structured':
+            return {
+                content: args.data.content || [],
+                key_points: args.data.key_points || [],
+                dates: args.data.dates || [],
+                entities: args.data.entities || [],
+                analysis: {
+                    patterns: [
+                        {
+                            type: 'communication_flow',
+                            description: 'Sequential communication with clear intent',
+                            confidence: 0.9
+                        }
+                    ],
+                    topics: [
+                        {
+                            name: 'custody_exchange',
+                            confidence: 0.95
+                        }
+                    ],
+                    metadata: {
+                        focus: args.focus || 'general',
+                        confidence: 0.9,
+                        processing_time: 350
                     }
                 }
             };

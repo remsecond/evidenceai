@@ -1,0 +1,127 @@
+{
+  "valid_topics": [
+    "schedule_change",
+    "medical",
+    "education",
+    "communication",
+    "custody_arrangement"
+  ],
+  "valid_entities": [
+    "John Smith",
+    "Jane Doe",
+    "Tommy",
+    "Dr. Williams",
+    "Ms. Johnson",
+    "Children's Medical Center"
+  ],
+  "valid_relationships": [
+    {
+      "from": "John Smith",
+      "to": "Tommy",
+      "type": "family",
+      "confidence": 0.95,
+      "attributes": {
+        "relationship": "parent",
+        "custody_role": "requesting_parent"
+      }
+    },
+    {
+      "from": "Jane Doe",
+      "to": "Tommy",
+      "type": "family",
+      "confidence": 0.95,
+      "attributes": {
+        "relationship": "parent",
+        "custody_role": "responding_parent"
+      }
+    }
+  ],
+  "valid_patterns": [
+    {
+      "type": "temporal_sequence",
+      "events": [
+        {
+          "date": "Mon, 15 Jan 2024 09:30:00 -0500",
+          "event": "email_sent",
+          "importance": "high"
+        },
+        {
+          "date": "Tuesday, January 23rd",
+          "time": {
+            "original": "3:00 PM",
+            "requested": "1:00 PM",
+            "appointment": "2:00 PM"
+          },
+          "event": "medical_appointment",
+          "importance": "high",
+          "requires_coordination": true
+        },
+        {
+          "date": "Wednesday",
+          "event": "homework_due",
+          "importance": "medium",
+          "requires_coordination": true
+        },
+        {
+          "date": "Thursday, January 25th",
+          "time": "4:30 PM",
+          "event": "parent_teacher_conference",
+          "importance": "high",
+          "requires_coordination": true
+        }
+      ]
+    },
+    {
+      "type": "request_sequence",
+      "steps": [
+        {
+          "type": "primary_request",
+          "action": "schedule_change",
+          "reason": "medical_appointment",
+          "urgency": "high"
+        },
+        {
+          "type": "secondary_request",
+          "action": "parent_teacher_conference",
+          "reason": "academic_progress",
+          "urgency": "medium"
+        },
+        {
+          "type": "tertiary_request",
+          "action": "textbook_return",
+          "reason": "homework_due",
+          "urgency": "medium"
+        }
+      ]
+    },
+    {
+      "type": "coordination_pattern",
+      "aspects": [
+        {
+          "type": "schedule_coordination",
+          "events": ["medical_appointment", "parent_teacher_conference"],
+          "complexity": "high"
+        },
+        {
+          "type": "item_coordination",
+          "items": ["math textbook"],
+          "deadline": "Wednesday",
+          "complexity": "low"
+        }
+      ]
+    }
+  ],
+  "confidence_scores": {
+    "topics": 0.95,
+    "entities": 0.92,
+    "relationships": 0.9,
+    "patterns": 0.88,
+    "overall": 0.91
+  },
+  "metadata": {
+    "analysis_type": "sequential_validation",
+    "document_type": "custody_communication",
+    "processing_time": 156,
+    "version": "1.0"
+  }
+}

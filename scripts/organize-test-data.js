@@ -45,7 +45,7 @@ async function organizeTestData(sourcePath) {
             
             // Check file size and get recommendations
             const content = await fs.readFile(filePath, 'utf8');
-            const sizeCheck = await checkFileSize(filePath);
+            const sizeCheck = checkFileSize(stats.size);
 
             // Determine target directory based on file characteristics
             let targetDir;

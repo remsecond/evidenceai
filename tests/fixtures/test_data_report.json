@@ -1,0 +1,64 @@
+{
+  "timestamp": "2025-01-08T02:12:39.443Z",
+  "categories": {
+    "small": {
+      "file_count": 14,
+      "files": [
+        "custody_exchange_small.json",
+        "exact_token_test.txt",
+        "large_test.txt",
+        "README.md",
+        "test_0.599mb.txt",
+        "test_0.6mb.txt",
+        "test_1.2mb.txt",
+        "test_19.2mb.txt",
+        "test_2.4mb.txt",
+        "test_4.8mb.txt",
+        "test_40mb.txt",
+        "test_9.6mb.txt",
+        "test_data_report.json",
+        "token_limit_test.txt"
+      ]
+    },
+    "medium": {
+      "file_count": 1,
+      "files": [
+        "communication_medium.json"
+      ]
+    },
+    "large": {
+      "file_count": 1,
+      "files": [
+        "mixed_large.json"
+      ]
+    },
+    "emails": {
+      "file_count": 4,
+      "files": [
+        "communication_medium.eml",
+        "custody_exchange_small.eml",
+        "mixed_large.eml",
+        "sample_email.eml"
+      ]
+    },
+    "ofw": {
+      "file_count": 1,
+      "files": [
+        "OFW_Messages_Report_Dec.pdf"
+      ]
+    },
+    "edge_cases": {
+      "file_count": 4,
+      "files": [
+        "mixed_formats.json",
+        "token_limit_exact.json",
+        "token_limit_over.json",
+        "token_limit_test.txt"
+      ]
+    },
+    "invalid": {
+      "file_count": 0,
+      "files": []
+    }
+  }
+}

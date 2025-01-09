@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvidenceAI Project Dashboard</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1, h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .folder-link {
+            display: block;
+            padding: 15px;
+            margin: 10px 0;
+            background: #e9ecef;
+            border-radius: 4px;
+            color: #2c3e50;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .folder-link:hover {
+            background: #dee2e6;
+        }
+        .description {
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+        .status.active {
+            background: #d4edda;
+            color: #155724;
+        }
+        .status.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>EvidenceAI Project Dashboard</h1>
+
+        <div class="section">
+            <h2>Test Files</h2>
+            <a href="file:///C:/Users/robmo/OneDrive/Documents/evidenceai_test/input" class="folder-link">
+                Input Files Directory
+                <div class="description">Location to place new test files for processing</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>Processing Results</h2>
+            <a href="file:///C:/Users/robmo/Desktop/evidenceai/demos/basic-pipeline-test" class="folder-link">
+                Processing Output Directory
+                <div class="description">View results from file processing tests</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>Current Test Status</h2>
+            <div class="folder-link">
+                File Size Test <span class="status active">PASSED</span>
+                <div class="description">
+                    Last tested file: OFW_Messages_Report_Dec.pdf (0.90 MB)<br>
+                    Status: Enhanced chunking enabled<br>
+                    Features: Section preservation, metadata tracking<br>
+                    Processing: Parallel chunk processing with structure preservation<br>
+                    Estimated processing time: 8-10 seconds
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>Test Resources</h2>
+            <a href="file:///C:/Users/robmo/Desktop/evidenceai/test-pdf-extraction.js" class="folder-link">
+                Run PDF Extraction Test
+                <div class="description">Test PDF processing with enhanced chunking</div>
+            </a>
+            <a href="file:///C:/Users/robmo/Desktop/evidenceai/tests/unit/token-limits.test.js" class="folder-link">
+                Run Token Limit Tests
+                <div class="description">Verify chunking behavior and limits</div>
+            </a>
+        </div>
+
+        <div class="section">
+            <h2>Development Resources</h2>
+            <a href="file:///C:/Users/robmo/Desktop/evidenceai/dev_protocol.html" class="folder-link">
+                Development Protocol
+                <div class="description">View the development guidelines and process</div>
+            </a>
+        </div>
+    </div>
+</body>
+</html>

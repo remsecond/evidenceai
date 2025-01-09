@@ -1,0 +1,108 @@
+From: sender@example.com
+To: recipient@example.com
+Subject: Large Test Document
+Date: Thu, 14 Dec 2023 10:00:00 -0800
+
+=== Section 1: Background ===
+
+This is a large test document designed to verify our chunking and validation systems. The document contains multiple sections with varying content types and structures.
+
+=== Section 2: Technical Details ===
+
+The system should handle:
+1. Size validation (up to 30MB)
+2. Content validation
+3. Security checks
+4. Quality metrics
+5. Format compliance
+
+=== Section 3: Sample Data ===
+
+Here's some repeated content to test chunking:
+
+${Array(50).fill(`
+- Item with details and explanation
+- Another item with more context
+- Technical specification details
+- Implementation considerations
+- Performance metrics
+- Quality assurance steps
+- Validation requirements
+- Security considerations
+- Compliance checks
+- Documentation needs`).join('\n')}
+
+=== Section 4: Edge Cases ===
+
+Testing various edge cases:
+- Unicode characters: 世界, 🌟, ñ, é
+- HTML content: <div>Test</div>
+- URLs: https://example.com
+- Special characters: &, <, >, ", '
+- Numbers and dates: 2023-12-14, 123.45, -678
+
+=== Section 5: Quality Checks ===
+
+This section contains high-quality, unique content to test our quality validation:
+
+The system implements a comprehensive validation pipeline that checks multiple aspects of incoming documents. Each validation stage serves a specific purpose and helps ensure the overall quality and security of the processed content.
+
+Size validation ensures that documents don't exceed our processing limits while still allowing for efficient chunking of larger files. Content validation verifies the structure and format of the document, checking for required sections and proper formatting.
+
+Security validation protects against potential threats by scanning for malicious content, excessive URLs, or dangerous patterns. Quality validation ensures that the content meets our standards for density, uniqueness, and overall value.
+
+=== Section 6: Technical Implementation ===
+
+The validation system uses multiple specialized components:
+
+1. File Size Checker:
+   - Validates total file size
+   - Estimates token count
+   - Determines chunking strategy
+   - Calculates processing metrics
+
+2. Content Validator:
+   - Checks document structure
+   - Verifies required sections
+   - Validates format compliance
+   - Ensures proper encoding
+
+3. Security Scanner:
+   - Detects malicious patterns
+   - Validates URL counts
+   - Checks for script injection
+   - Monitors security metrics
+
+4. Quality Analyzer:
+   - Measures content density
+   - Checks for duplicates
+   - Validates uniqueness
+   - Assesses readability
+
+=== Section 7: Performance Metrics ===
+
+The system tracks various performance metrics:
+
+1. Processing Speed:
+   - Document loading time
+   - Validation duration
+   - Chunking overhead
+   - Total processing time
+
+2. Resource Usage:
+   - Memory consumption
+   - CPU utilization
+   - Network bandwidth
+   - Storage requirements
+
+3. Quality Metrics:
+   - Content density
+   - Uniqueness score
+   - Format compliance
+   - Security rating
+
+=== Section 8: Conclusion ===
+
+This test document helps verify our system's ability to handle large, complex documents while maintaining performance and quality standards. The various sections test different aspects of our validation and processing pipeline.
+
+[End of Document]
