@@ -17,66 +17,121 @@ export class PDFProcessor extends BaseProcessor {
   }
 
   /**
-   * Process a PDF file into our base document structure
-   * @param {string} filePath - Path to the PDF file
+   * Process one or more PDF files into our base document structure
+   * @param {string|string[]} filePaths - Path(s) to the PDF file(s)
+   * @param {Object} options - Processing options
+   * @param {string} options.taskObjective - Clear description of processing goal
+   * @param {string[]} options.sampleQueries - Example queries to guide processing
+   * @param {Object} options.domainTerminology - Domain-specific term mappings
    * @returns {Promise<Object>} Processed document in base format
    */
-  async processPdf(filePath) {
+  async processPdf(filePaths, options = {}) {
     try {
-      logger.info("Starting PDF processing:", filePath);
+      logger.info(
+        "Starting PDF processing:",
+        Array.isArray(filePaths) ? filePaths.join(", ") : filePaths
+      );
       const startTime = Date.now();
 
-      // Create base document
-      let doc = this.createBaseDocument(filePath);
+      // Handle single file or array of files
+      const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
 
-      // Get file stats
-      const stats = fs.statSync(filePath);
-      const fileInfo = {
-        path: filePath,
-        size_bytes: stats.size,
-        size_mb: (stats.size / (1024 * 1024)).toFixed(2),
-        created: stats.birthtime,
-        modified: stats.mtime,
+      // Create base document
+      let doc = this.createBaseDocument(paths[0]); // Use first file as primary
+
+      // Add task-specific metadata
+      doc.metadata.task = {
+        objective: options.taskObjective || "General document processing",
+        sample_queries: options.sampleQueries || [],
+        domain_terminology: options.domainTerminology || {},
       };
 
-      // Read and parse PDF
-      const dataBuffer = fs.readFileSync(filePath);
-      const pdfData = await pdfParse(dataBuffer, { max: 0 });
+      // Process each file
+      const allPdfData = await Promise.all(
+        paths.map(async (path) => {
+          // Get file stats
+          const stats = fs.statSync(path);
+          const fileInfo = {
+            path: path,
+            size_bytes: stats.size,
+            size_mb: (stats.size / (1024 * 1024)).toFixed(2),
+            created: stats.birthtime,
+            modified: stats.mtime,
+          };
 
-      // Process content into timeline events
-      const sections = this.identifySections(pdfData.text);
-      for (const section of sections) {
-        // Add section as an event
+          // Read and parse PDF
+          const dataBuffer = fs.readFileSync(path);
+          const pdfData = await pdfParse(dataBuffer, { max: 0 });
+
+          return {
+            path,
+            fileInfo,
+            pdfData,
+            text: pdfData.text,
+          };
+        })
+      );
+
+      // Process all documents
+      for (const pdfData of allPdfData) {
+        // Process content into timeline events
+        const sections = this.identifySections(pdfData.text);
+
+        // Create document summary section
         doc = this.addTimelineEvent(doc, {
-          type: "document",
-          content: section.header || "Untitled Section",
-          participants: [], // Will be extracted from content
-          topics: this.extractTopics(section.content),
+          type: "summary",
+          content: "Document Summary",
+          source_file: pdfData.path,
+          key_points: this.extractKeyPoints(pdfData.text),
+          participants: this.extractParticipants(pdfData.text),
+          topics: this.extractTopics(pdfData.text),
+          metadata: {
+            type: "document_summary",
+            importance: "high",
+          },
         });
 
-        // Process section content into events
-        const contentEvents = this.processContentIntoEvents(section.content);
-        for (const event of contentEvents) {
-          doc = this.addTimelineEvent(doc, event);
-        }
+        // Process each section
+        for (const section of sections) {
+          // Create section header with table summary
+          const summary = this.createSectionSummary(section);
+          doc = this.addTimelineEvent(doc, {
+            type: "section",
+            content: summary,
+            source_file: pdfData.path,
+            participants: [], // Will be extracted from content
+            topics: this.extractTopics(section.content),
+          });
 
-        // Extract and add relationships
-        doc = this.extractRelationships(section.content, doc);
+          // Process section content into events
+          const contentEvents = this.processContentIntoEvents(section.content);
+          for (const event of contentEvents) {
+            doc = this.addTimelineEvent(doc, event);
+          }
+
+          // Extract and add relationships
+          doc = this.extractRelationships(section.content, doc);
+        }
       }
 
-      // Add document metadata
+      // Cross-reference and consolidate insights
+      doc = this.crossReferenceDocuments(doc, allPdfData);
+
+      // Add consolidated metadata
       doc.metadata = {
         ...doc.metadata,
-        pdf_info: {
-          pages: pdfData.numpages,
-          version: pdfData.pdfInfo?.PDFFormatVersion,
-          info: pdfData.info,
-        },
-        statistics: this.calculateStatistics(pdfData.text),
+        pdf_info: allPdfData.map((pdf) => ({
+          path: pdf.path,
+          pages: pdf.pdfData.numpages,
+          version: pdf.pdfData.pdfInfo?.PDFFormatVersion,
+          info: pdf.pdfData.info,
+        })),
+        statistics: this.calculateCombinedStatistics(allPdfData),
         processing_meta: {
           timestamp: new Date().toISOString(),
           version: "1.0",
           processing_time_ms: Date.now() - startTime,
+          files_processed: allPdfData.length,
         },
       };
 
@@ -339,7 +394,8 @@ export class PDFProcessor extends BaseProcessor {
     const participants = new Set();
 
     // First, check for email headers
-    const emailHeaderPattern = /^(?:From|To|Cc|Bcc):\s*([^<\n]+)?(?:<([^>]+)>)?/gim;
+    const emailHeaderPattern =
+      /^(?:From|To|Cc|Bcc):\s*([^<\n]+)?(?:<([^>]+)>)?/gim;
     let match;
     while ((match = emailHeaderPattern.exec(text)) !== null) {
       if (match[1]) participants.add(match[1].trim());
@@ -357,35 +413,105 @@ export class PDFProcessor extends BaseProcessor {
     // Known false positives to filter out
     const falsePositives = new Set([
       // Email/System Terms
-      "First Viewed", "Last Viewed", "Message Report", "Family Wizard",
-      "Date Sent", "Date Received", "Subject Line", "Message Body", 
-      "Email Thread", "Reply All", "Forward Message", "Original Message", 
-      "Quick Reply", "Read Receipt", "Mail Delivery", "System Administrator", 
-      "Help Desk", "Support Team", "Auto Reply", "Client Portal",
-      
+      "First Viewed",
+      "Last Viewed",
+      "Message Report",
+      "Family Wizard",
+      "Date Sent",
+      "Date Received",
+      "Subject Line",
+      "Message Body",
+      "Email Thread",
+      "Reply All",
+      "Forward Message",
+      "Original Message",
+      "Quick Reply",
+      "Read Receipt",
+      "Mail Delivery",
+      "System Administrator",
+      "Help Desk",
+      "Support Team",
+      "Auto Reply",
+      "Client Portal",
+
       // Time/Date References
-      "On Monday", "On Tuesday", "On Wednesday", "On Thursday", "On Friday",
-      "On Saturday", "On Sunday", "On Mon", "On Tue", "On Wed", "On Thu",
-      "On Fri", "On Sat", "On Sun", "Next Week", "Last Week", "This Week",
-      "Next Month", "Last Month", "This Month", "Next Year", "Last Year",
-      
+      "On Monday",
+      "On Tuesday",
+      "On Wednesday",
+      "On Thursday",
+      "On Friday",
+      "On Saturday",
+      "On Sunday",
+      "On Mon",
+      "On Tue",
+      "On Wed",
+      "On Thu",
+      "On Fri",
+      "On Sat",
+      "On Sun",
+      "Next Week",
+      "Last Week",
+      "This Week",
+      "Next Month",
+      "Last Month",
+      "This Month",
+      "Next Year",
+      "Last Year",
+
       // Products/Items
-      "Snow Blower", "Bean Bag", "Green Egg", "Beach Couch", "Power Supply",
-      "Mini Microwave", "Small Microwave", "Study Frame", "Dining Table",
-      "Electric Bikes", "Black Bike", "Pellet Grill", "Electric Smoker",
-      "Telsa Charger", "Clothes Hangers", "Sonos Soundbar",
-      
+      "Snow Blower",
+      "Bean Bag",
+      "Green Egg",
+      "Beach Couch",
+      "Power Supply",
+      "Mini Microwave",
+      "Small Microwave",
+      "Study Frame",
+      "Dining Table",
+      "Electric Bikes",
+      "Black Bike",
+      "Pellet Grill",
+      "Electric Smoker",
+      "Telsa Charger",
+      "Clothes Hangers",
+      "Sonos Soundbar",
+
       // Locations/Organizations
-      "Hong Kong", "Kirkland Ave", "Spring St", "Union St", "Granada Blvd",
-      "Ormond Beach", "Brand Blvd", "Seattle Academy", "Amazon Appstore",
-      "Washington State", "King County", "Sammamish High", "Home Court",
-      
+      "Hong Kong",
+      "Kirkland Ave",
+      "Spring St",
+      "Union St",
+      "Granada Blvd",
+      "Ormond Beach",
+      "Brand Blvd",
+      "Seattle Academy",
+      "Amazon Appstore",
+      "Washington State",
+      "King County",
+      "Sammamish High",
+      "Home Court",
+
       // Generic Terms
-      "Good Morning", "Good Evening", "Hi There", "Hey Guys", "Thank You",
-      "Touch Base", "Get Outlook", "Powered By", "Privacy Policy",
-      "Account Overview", "User Name", "App Name", "Standard Price",
-      "New Year", "Spring Break", "Winter Break", "Family Introduction",
-      "Contact Info", "Board Certified", "Private Practice"
+      "Good Morning",
+      "Good Evening",
+      "Hi There",
+      "Hey Guys",
+      "Thank You",
+      "Touch Base",
+      "Get Outlook",
+      "Powered By",
+      "Privacy Policy",
+      "Account Overview",
+      "User Name",
+      "App Name",
+      "Standard Price",
+      "New Year",
+      "Spring Break",
+      "Winter Break",
+      "Family Introduction",
+      "Contact Info",
+      "Board Certified",
+      "Private Practice",
     ]);
 
     // Extract and filter participants
@@ -455,67 +581,109 @@ export class PDFProcessor extends BaseProcessor {
     const topics = this.extractTopics(text);
 
     // Create participant relationships only for real participants (not system entities)
-    const realParticipants = participants.filter(p => {
+    const realParticipants = participants.filter((p) => {
       // Skip emails
       if (p.includes("@")) return false;
-      
+
       // Skip system/header terms
-      if (p.match(/^(Date|Subject|Message|System|Auto|Help|Support|Account|User|App|Privacy|Contact)/)) {
+      if (
+        p.match(
+          /^(Date|Subject|Message|System|Auto|Help|Support|Account|User|App|Privacy|Contact)/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip time/date references
-      if (p.match(/^(On|Next|Last|This) (Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Week|Month|Year)/)) {
+      if (
+        p.match(
+          /^(On|Next|Last|This) (Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Week|Month|Year)/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip generic greetings/phrases
-      if (p.match(/^(Good|Hi|Hey|Hello|Thank|Touch|Get|New|Board|Private|Happy|Dear) [A-Z][a-z]+$/)) {
+      if (
+        p.match(
+          /^(Good|Hi|Hey|Hello|Thank|Touch|Get|New|Board|Private|Happy|Dear) [A-Z][a-z]+$/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip titles, roles, and honorifics
-      if (p.match(/^(Dr|Mr|Mrs|Ms|Prof|Director|President|Vice|Board|Member|Chairman|CEO|Manager|Coach|Administrator|Assistant|Supervisor|Leader|Head|Chief|Officer|Executive|Principal|Dean|Coordinator) /)) {
+      if (
+        p.match(
+          /^(Dr|Mr|Mrs|Ms|Prof|Director|President|Vice|Board|Member|Chairman|CEO|Manager|Coach|Administrator|Assistant|Supervisor|Leader|Head|Chief|Officer|Executive|Principal|Dean|Coordinator) /
+        )
+      ) {
         return false;
       }
-      
+
       // Skip product/service names and descriptions
-      if (p.match(/^[A-Z][a-z]+ (Stuff|Blower|Bag|Egg|Couch|Supply|Microwave|Frame|Table|Bikes?|Grill|Smoker|Charger|Hangers|Soundbar|Services|Solutions|Systems|Products|Equipment|Recommendations|Therapy|Psychology|Counseling|Education|Training|Support|Access|Behavior|Schedule|Plan|Report|List|Notes|Info|Alert|Confirmation|Transfer|Status|Overview|Summary)$/)) {
+      if (
+        p.match(
+          /^[A-Z][a-z]+ (Stuff|Blower|Bag|Egg|Couch|Supply|Microwave|Frame|Table|Bikes?|Grill|Smoker|Charger|Hangers|Soundbar|Services|Solutions|Systems|Products|Equipment|Recommendations|Therapy|Psychology|Counseling|Education|Training|Support|Access|Behavior|Schedule|Plan|Report|List|Notes|Info|Alert|Confirmation|Transfer|Status|Overview|Summary)$/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip organization names and types
-      if (p.match(/^[A-Z][a-z]+ (Inc|LLC|Corp|Corporation|Foundation|Association|Institute|Center|Group|Team|Company|Realty|Agency|Clinic|Hospital|Services|Solutions|Partners|Consultants|Advisors|International|Global|National|Regional|Local|Office|Division|Department|Branch|Unit)$/)) {
+      if (
+        p.match(
+          /^[A-Z][a-z]+ (Inc|LLC|Corp|Corporation|Foundation|Association|Institute|Center|Group|Team|Company|Realty|Agency|Clinic|Hospital|Services|Solutions|Partners|Consultants|Advisors|International|Global|National|Regional|Local|Office|Division|Department|Branch|Unit)$/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip location/building names and types
-      if (p.match(/^[A-Z][a-z]+ (Ave|St|Blvd|Beach|County|State|Court|Academy|High|School|University|College|Building|Center|Plaza|Park|Mall|Road|Drive|Lane|Circle|Square|Heights|Gardens|Place|Point|Ridge|Hills|Valley|Springs|Woods|Estates|Commons|District|Zone|Area|Region)$/)) {
+      if (
+        p.match(
+          /^[A-Z][a-z]+ (Ave|St|Blvd|Beach|County|State|Court|Academy|High|School|University|College|Building|Center|Plaza|Park|Mall|Road|Drive|Lane|Circle|Square|Heights|Gardens|Place|Point|Ridge|Hills|Valley|Springs|Woods|Estates|Commons|District|Zone|Area|Region)$/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip compound phrases and descriptive combinations
-      if (p.match(/^[A-Z][a-z]+ (And|Or|Of|For|To|From|With|By|In|On|At|Up|Down|Out|Over|Under|Through|Into|Onto|About|After|Before|During|Without|Within|Between|Among|Around|Behind|Beside|Beyond|Toward) [A-Z][a-z]+$/)) {
+      if (
+        p.match(
+          /^[A-Z][a-z]+ (And|Or|Of|For|To|From|With|By|In|On|At|Up|Down|Out|Over|Under|Through|Into|Onto|About|After|Before|During|Without|Within|Between|Among|Around|Behind|Beside|Beyond|Toward) [A-Z][a-z]+$/
+        )
+      ) {
         return false;
       }
-      
+
       // Skip system messages and status indicators
-      if (p.match(/^(Order|Payment|Transfer|Account|User|System|Status|Alert|Notification|Confirmation|Report|Summary|Overview|Update|Error|Warning|Success|Info|Help|Support) /)) {
+      if (
+        p.match(
+          /^(Order|Payment|Transfer|Account|User|System|Status|Alert|Notification|Confirmation|Report|Summary|Overview|Update|Error|Warning|Success|Info|Help|Support) /
+        )
+      ) {
         return false;
       }
-      
+
       // Skip time-based phrases
-      if (p.match(/^(Morning|Afternoon|Evening|Night|Today|Tomorrow|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|January|February|March|April|May|June|July|August|September|October|November|December) /)) {
+      if (
+        p.match(
+          /^(Morning|Afternoon|Evening|Night|Today|Tomorrow|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|January|February|March|April|May|June|July|August|September|October|November|December) /
+        )
+      ) {
         return false;
       }
-      
+
       // Accept only proper names with 2-3 parts, where each part is properly capitalized
-      const parts = p.split(' ');
+      const parts = p.split(" ");
       return (
-        parts.length >= 2 && 
-        parts.length <= 3 && 
-        parts.every(part => part.match(/^[A-Z][a-z]{1,20}$/)) &&
-        !parts.some(part => part.match(/^(The|And|Or|Of|For|To|From|With|By|In|On|At)$/))
+        parts.length >= 2 &&
+        parts.length <= 3 &&
+        parts.every((part) => part.match(/^[A-Z][a-z]{1,20}$/)) &&
+        !parts.some((part) =>
+          part.match(/^(The|And|Or|Of|For|To|From|With|By|In|On|At)$/)
+        )
       );
     });
 
@@ -525,11 +693,23 @@ export class PDFProcessor extends BaseProcessor {
         // Determine relationship type based on context
         let type = "mentioned_together";
         const context = text.toLowerCase();
-        if (context.includes("agree") || context.includes("approve") || context.includes("accept")) {
+        if (
+          context.includes("agree") ||
+          context.includes("approve") ||
+          context.includes("accept")
+        ) {
           type = "agreement";
-        } else if (context.includes("disput") || context.includes("disagree") || context.includes("object")) {
+        } else if (
+          context.includes("disput") ||
+          context.includes("disagree") ||
+          context.includes("object")
+        ) {
           type = "dispute";
-        } else if (context.includes("discuss") || context.includes("conversation") || context.includes("meeting")) {
+        } else if (
+          context.includes("discuss") ||
+          context.includes("conversation") ||
+          context.includes("meeting")
+        ) {
           type = "discussion";
         }
 
@@ -543,9 +723,10 @@ export class PDFProcessor extends BaseProcessor {
     }
 
     // Create topic relationships only between meaningful topics
-    const meaningfulTopics = topics.filter(t => 
-      !t.match(/^(general|misc|other)$/) && // Skip generic topics
-      t.length > 3 // Skip very short terms
+    const meaningfulTopics = topics.filter(
+      (t) =>
+        !t.match(/^(general|misc|other)$/) && // Skip generic topics
+        t.length > 3 // Skip very short terms
     );
 
     // Create topic relationships
@@ -624,6 +805,154 @@ export class PDFProcessor extends BaseProcessor {
     }
 
     return sections;
+  }
+
+  /**
+   * Create a structured summary for a section
+   * @private
+   */
+  createSectionSummary(section) {
+    // Extract key information
+    const keyPoints = this.extractKeyPoints(section.content);
+    const participants = this.extractParticipants(section.content);
+    const topics = this.extractTopics(section.content);
+    const dates = this.extractDates(section.content);
+
+    // Create table-style summary
+    const summary = [
+      `## ${section.header || "Untitled Section"}`,
+      "",
+      "### Key Points",
+      ...keyPoints.map((point) => `- [${point.type}] ${point.content}`),
+      "",
+      "### Participants",
+      ...participants.map((p) => `- ${p}`),
+      "",
+      "### Topics",
+      ...topics.map((t) => `- ${t}`),
+      "",
+      "### Timeline",
+      ...dates.map((d) => `- ${d.original} (${d.iso})`),
+      "",
+      "### Content Preview",
+      section.content.substring(0, 200) + "...",
+      "",
+    ].join("\n");
+
+    return summary;
+  }
+
+  /**
+   * Cross-reference and consolidate insights across documents
+   * @private
+   */
+  crossReferenceDocuments(doc, allPdfData) {
+    // Track overlapping content
+    const overlaps = {
+      participants: new Map(), // participant -> [documents]
+      topics: new Map(), // topic -> [documents]
+      dates: new Map(), // date -> [documents]
+      keyPoints: new Map(), // key point -> [documents]
+    };
+
+    // Analyze each document
+    allPdfData.forEach((pdfData) => {
+      // Extract all entities
+      const participants = this.extractParticipants(pdfData.text);
+      const topics = this.extractTopics(pdfData.text);
+      const dates = this.extractDates(pdfData.text);
+      const keyPoints = this.extractKeyPoints(pdfData.text);
+
+      // Track document overlaps
+      const trackOverlap = (map, items, doc) => {
+        items.forEach((item) => {
+          if (!map.has(item)) map.set(item, new Set());
+          map.get(item).add(doc);
+        });
+      };
+
+      trackOverlap(overlaps.participants, participants, pdfData.path);
+      trackOverlap(overlaps.topics, topics, pdfData.path);
+      trackOverlap(
+        overlaps.dates,
+        dates.map((d) => d.iso),
+        pdfData.path
+      );
+      trackOverlap(
+        overlaps.keyPoints,
+        keyPoints.map((k) => k.content),
+        pdfData.path
+      );
+    });
+
+    // Add cross-reference metadata
+    doc.metadata.cross_references = {
+      participant_overlaps: Array.from(overlaps.participants.entries())
+        .filter(([_, docs]) => docs.size > 1)
+        .map(([participant, docs]) => ({
+          participant,
+          documents: Array.from(docs),
+        })),
+      topic_overlaps: Array.from(overlaps.topics.entries())
+        .filter(([_, docs]) => docs.size > 1)
+        .map(([topic, docs]) => ({
+          topic,
+          documents: Array.from(docs),
+        })),
+      date_overlaps: Array.from(overlaps.dates.entries())
+        .filter(([_, docs]) => docs.size > 1)
+        .map(([date, docs]) => ({
+          date,
+          documents: Array.from(docs),
+        })),
+      key_point_overlaps: Array.from(overlaps.keyPoints.entries())
+        .filter(([_, docs]) => docs.size > 1)
+        .map(([keyPoint, docs]) => ({
+          key_point: keyPoint,
+          documents: Array.from(docs),
+        })),
+    };
+
+    return doc;
+  }
+
+  /**
+   * Calculate combined statistics across multiple documents
+   * @private
+   */
+  calculateCombinedStatistics(allPdfData) {
+    // Initialize totals
+    const totals = {
+      characters: 0,
+      words: 0,
+      paragraphs: 0,
+      estimated_total_tokens: 0,
+    };
+
+    // Calculate per-document stats and aggregate
+    const documentStats = allPdfData.map((pdf) => {
+      const stats = this.calculateStatistics(pdf.text);
+      totals.characters += stats.characters;
+      totals.words += stats.words;
+      totals.paragraphs += stats.paragraphs;
+      totals.estimated_total_tokens += stats.estimated_total_tokens;
+      return {
+        path: pdf.path,
+        ...stats,
+      };
+    });
+
+    return {
+      per_document: documentStats,
+      totals: {
+        ...totals,
+        average_paragraph_length:
+          totals.paragraphs > 0
+            ? Math.round(totals.words / totals.paragraphs)
+            : 0,
+        documents_processed: allPdfData.length,
+      },
+    };
   }
 }
 
