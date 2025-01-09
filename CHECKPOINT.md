@@ -1,6 +1,83 @@
 # PDF Processing Pipeline Checkpoint - January 9, 2025
 
-## Working Features
+## Latest Achievement: Base Document Structure
+
+We've established a validated base document structure that serves as the foundation for all document processing:
+
+### Core Data Structure
+```json
+{
+  "thread_id": "string",
+  "timeline": {
+    "events": [{
+      "timestamp": "ISO-8601",
+      "type": "message|document|event",
+      "content": "string",
+      "participants": ["string"],
+      "topics": ["string"],
+      "sentiment": -1.0 to 1.0
+    }]
+  },
+  "relationships": {
+    "participant_network": {
+      "participant1": {
+        "participant2": "relationship_type"
+      }
+    },
+    "topic_links": {
+      "topic1": {
+        "topic2": "relationship_type"
+      }
+    }
+  },
+  "metadata": {
+    "source_file": "string",
+    "validation_status": "pending|valid|invalid",
+    "processing_timestamp": "ISO-8601"
+  }
+}
+```
+
+### Validation Rules
+1. Required Fields:
+   - thread_id
+   - timeline.events
+   - relationships.participant_network
+   - relationships.topic_links
+   - All metadata fields
+
+2. Data Types:
+   - Timestamps must be valid ISO-8601 format
+   - Event types must be one of: message, document, event
+   - Sentiment scores must be between -1 and 1
+   - Arrays (participants, topics) must contain strings
+
+3. Relationship Structure:
+   - Participant relationships are bidirectional
+   - Topic relationships support hierarchical organization
+
+### Base Processor Features
+1. Document Creation:
+   - Generates unique thread IDs
+   - Initializes empty timeline and relationship structures
+   - Sets initial metadata with pending status
+
+2. Event Management:
+   - Adds timeline events with automatic timestamps
+   - Validates event structure and content
+   - Maintains chronological order
+
+3. Relationship Mapping:
+   - Tracks participant interactions
+   - Maps topic relationships
+   - Supports relationship type classification
+
+4. Validation:
+   - Schema validation using Ajv
+   - Format validation for dates and enums
+   - Error reporting with detailed messages
+
+## Previously Working Features
 
 1. PDF Processing Pipeline
 - Handles large PDFs (tested up to 1,048 pages, ~515K tokens)
@@ -37,13 +114,23 @@
    - 40 balanced chunks
 
 ## Key Components
-1. scripts/process-ofw-with-pdf.js
+1. src/schemas/base-schema.js
+   - Core data structure definition
+   - Validation rules and constraints
+   - Schema versioning
+
+2. src/services/base-processor.js
+   - Base document processing logic
+   - Event and relationship management
+   - Validation handling
+
+3. scripts/process-ofw-with-pdf.js
    - Main pipeline script
    - Handles PDF processing
    - Creates model-specific output directories
    - Generates structured output files
 
-2. src/services/pdf-processor.js
+4. src/services/pdf-processor.js
    - Core PDF processing logic
    - Smart chunking algorithm
    - Structure preservation
@@ -51,47 +138,22 @@
 
 ## Usage
 ```bash
+# Process a PDF file
 node scripts/process-ofw-with-pdf.js "path/to/your.pdf"
+
+# Run base processor tests
+node test-base-processor.js
 ```
 
-## Breakthrough Achievement
-
-After 10 days of failed attempts, we've achieved a major breakthrough with a unified processing approach that handles:
-
-1. Document Size Range
-- Large files (1,048 pages, ~515K tokens)
-- Medium files (358 pages, ~180K tokens)
-- Small files (125 pages, ~82K tokens)
-- Processing time 1-3 seconds regardless of size
-
-2. Document Type Flexibility
-- OFW Messages (structured reports)
-- Email Collections (with threading)
-- Different PDF formats and structures
-- Varying content densities
-
-3. Smart Chunking Capabilities
-- Automatically balances chunk sizes (~12-13K tokens)
-- Adapts to document structure:
-  * Preserves OFW message boundaries
-  * Maintains email subject lines and threading
-  * Respects section markers and formatting
-- Handles varying content density and formatting
-
-4. Scalable Architecture
-- Organized by AI model type (claude, deepseek, gpt4, etc.)
-- Timestamped processing runs for version control
-- Complete metadata preservation
-- JSON-formatted chunks for easy model integration
-
-This represents a fundamental shift from our previous attempts:
-- From: Struggling to process any single file type
-- To: Successfully handling diverse document types with a unified approach
-- Result: A robust, flexible pipeline that maintains structure and context
-
 ## Next Steps
-1. Implement model-specific processing for each AI model
-2. Add chunk validation and quality checks
-3. Enhance metadata extraction
-4. Add progress tracking for large files
-5. Optimize memory usage for even larger documents
+1. Update PDF processor to use new base structure
+2. Implement model-specific processors extending base
+3. Add validation rules for specific document types
+4. Enhance relationship mapping capabilities
+5. Add progress tracking for large files
+6. Optimize memory usage for larger documents
+
+This represents our latest architectural foundation:
+- From: Model-centric output organization
+- To: Data-centric structure with model-specific enhancements
+- Result: A validated, consistent base for all document processing
