@@ -338,56 +338,63 @@ export class PDFProcessor extends BaseProcessor {
   extractParticipants(text) {
     const participants = new Set();
 
-    // Known participant patterns
+    // First, check for email headers
+    const emailHeaderPattern = /^(?:From|To|Cc|Bcc):\s*([^<\n]+)?(?:<([^>]+)>)?/gim;
+    let match;
+    while ((match = emailHeaderPattern.exec(text)) !== null) {
+      if (match[1]) participants.add(match[1].trim());
+      if (match[2]) participants.add(match[2].trim());
+    }
+
+    // Known participant patterns for body text
     const patterns = [
       // Standard name format (highly restrictive)
-      /(?<!First |Last |Next |Previous |Is |Thanks |View |Happy |This |Next |Last |See |Did |Leave |Drop |Also |Has |Our |My |On |At |In |From |To |For |With |The |That |When |Where |What |Why |How |If |Then |And |But |Or )(?:[A-Z][a-z]{1,20})(?: (?:[A-Z][a-z]{1,20})){1,2}(?! (?:Dec|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Insurance|Payment|Break|Off|Moment|Practices|Plumber|Coordinator|List|Cash|Christmas|Account|Summary|Treatment|Anniversary|Tickets|Card|Moment|Practices|Response|Payment|Fork|Request))/g,
-      // Email format
-      /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g,
+      /(?<!First |Last |Next |Previous |Is |Thanks |View |Happy |This |Next |Last |See |Did |Leave |Drop |Also |Has |Our |My |On |At |In |From |To |For |With |The |That |When |Where |What |Why |How |If |Then |And |But |Or |Date |Subject |Re: |Fw: |Fwd: )(?:[A-Z][a-z]{1,20})(?: (?:[A-Z][a-z]{1,20})){1,2}(?! (?:Dec|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Insurance|Payment|Break|Off|Moment|Practices|Plumber|Coordinator|List|Cash|Christmas|Account|Summary|Treatment|Anniversary|Tickets|Card|Moment|Practices|Response|Payment|Fork|Request|Sent|Received|Subject|Message|Report|Round|Truth))/g,
+      // Email format (not in headers)
+      /(?<!From:|To:|Cc:|Bcc:)\s+([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g,
     ];
 
     // Known false positives to filter out
     const falsePositives = new Set([
-      "First Viewed",
-      "Last Viewed",
-      "Message Report",
-      "Family Wizard",
-      "Condo Sale",
-      "Health Insurance",
-      "Mortgage Payment",
-      "Winter Break",
-      "Sound Practices",
-      "Parent Coordinator",
-      "Running List",
-      "Apple Cash",
-      "Local Hoops",
-      "Capital Gains",
-      "Ordinary Income",
-      "Insurance Card",
-      "Sunday Dec",
-      "Monday Dec",
-      "Tuesday Dec",
-      "Wednesday Dec",
-      "Thursday Dec",
-      "Friday Dec",
-      "Saturday Dec",
-      "Next Saturday",
-      "Last Thursday",
-      "This Saturday",
-      "Extra Mortgage",
-      "Developer Weeks",
-      "Breakthrough Moment",
-      "Sound Practices",
-      "Power Back",
-      "Running List",
+      // Email/System Terms
+      "First Viewed", "Last Viewed", "Message Report", "Family Wizard",
+      "Date Sent", "Date Received", "Subject Line", "Message Body", 
+      "Email Thread", "Reply All", "Forward Message", "Original Message", 
+      "Quick Reply", "Read Receipt", "Mail Delivery", "System Administrator", 
+      "Help Desk", "Support Team", "Auto Reply", "Client Portal",
+      
+      // Time/Date References
+      "On Monday", "On Tuesday", "On Wednesday", "On Thursday", "On Friday",
+      "On Saturday", "On Sunday", "On Mon", "On Tue", "On Wed", "On Thu",
+      "On Fri", "On Sat", "On Sun", "Next Week", "Last Week", "This Week",
+      "Next Month", "Last Month", "This Month", "Next Year", "Last Year",
+      
+      // Products/Items
+      "Snow Blower", "Bean Bag", "Green Egg", "Beach Couch", "Power Supply",
+      "Mini Microwave", "Small Microwave", "Study Frame", "Dining Table",
+      "Electric Bikes", "Black Bike", "Pellet Grill", "Electric Smoker",
+      "Telsa Charger", "Clothes Hangers", "Sonos Soundbar",
+      
+      // Locations/Organizations
+      "Hong Kong", "Kirkland Ave", "Spring St", "Union St", "Granada Blvd",
+      "Ormond Beach", "Brand Blvd", "Seattle Academy", "Amazon Appstore",
+      "Washington State", "King County", "Sammamish High", "Home Court",
+      
+      // Generic Terms
+      "Good Morning", "Good Evening", "Hi There", "Hey Guys", "Thank You",
+      "Touch Base", "Get Outlook", "Powered By", "Privacy Policy",
+      "Account Overview", "User Name", "App Name", "Standard Price",
+      "New Year", "Spring Break", "Winter Break", "Family Introduction",
+      "Contact Info", "Board Certified", "Private Practice"
     ]);
 
     // Extract and filter participants
     patterns.forEach((pattern) => {
       const matches = text.match(pattern) || [];
       matches.forEach((match) => {
-        if (!falsePositives.has(match)) {
-          participants.add(match);
+        const name = match.trim();
+        if (!falsePositives.has(name) && name.length > 0) {
+          participants.add(name);
         }
       });
     });
@@ -447,32 +454,109 @@ export class PDFProcessor extends BaseProcessor {
     const participants = this.extractParticipants(text);
     const topics = this.extractTopics(text);
 
+    // Create participant relationships only for real participants (not system entities)
+    const realParticipants = participants.filter(p => {
+      // Skip emails
+      if (p.includes("@")) return false;
+      
+      // Skip system/header terms
+      if (p.match(/^(Date|Subject|Message|System|Auto|Help|Support|Account|User|App|Privacy|Contact)/)) {
+        return false;
+      }
+      
+      // Skip time/date references
+      if (p.match(/^(On|Next|Last|This) (Mon|Tue|Wed|Thu|Fri|Sat|Sun|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|Week|Month|Year)/)) {
+        return false;
+      }
+      
+      // Skip generic greetings/phrases
+      if (p.match(/^(Good|Hi|Hey|Hello|Thank|Touch|Get|New|Board|Private|Happy|Dear) [A-Z][a-z]+$/)) {
+        return false;
+      }
+      
+      // Skip titles, roles, and honorifics
+      if (p.match(/^(Dr|Mr|Mrs|Ms|Prof|Director|President|Vice|Board|Member|Chairman|CEO|Manager|Coach|Administrator|Assistant|Supervisor|Leader|Head|Chief|Officer|Executive|Principal|Dean|Coordinator) /)) {
+        return false;
+      }
+      
+      // Skip product/service names and descriptions
+      if (p.match(/^[A-Z][a-z]+ (Stuff|Blower|Bag|Egg|Couch|Supply|Microwave|Frame|Table|Bikes?|Grill|Smoker|Charger|Hangers|Soundbar|Services|Solutions|Systems|Products|Equipment|Recommendations|Therapy|Psychology|Counseling|Education|Training|Support|Access|Behavior|Schedule|Plan|Report|List|Notes|Info|Alert|Confirmation|Transfer|Status|Overview|Summary)$/)) {
+        return false;
+      }
+      
+      // Skip organization names and types
+      if (p.match(/^[A-Z][a-z]+ (Inc|LLC|Corp|Corporation|Foundation|Association|Institute|Center|Group|Team|Company|Realty|Agency|Clinic|Hospital|Services|Solutions|Partners|Consultants|Advisors|International|Global|National|Regional|Local|Office|Division|Department|Branch|Unit)$/)) {
+        return false;
+      }
+      
+      // Skip location/building names and types
+      if (p.match(/^[A-Z][a-z]+ (Ave|St|Blvd|Beach|County|State|Court|Academy|High|School|University|College|Building|Center|Plaza|Park|Mall|Road|Drive|Lane|Circle|Square|Heights|Gardens|Place|Point|Ridge|Hills|Valley|Springs|Woods|Estates|Commons|District|Zone|Area|Region)$/)) {
+        return false;
+      }
+      
+      // Skip compound phrases and descriptive combinations
+      if (p.match(/^[A-Z][a-z]+ (And|Or|Of|For|To|From|With|By|In|On|At|Up|Down|Out|Over|Under|Through|Into|Onto|About|After|Before|During|Without|Within|Between|Among|Around|Behind|Beside|Beyond|Toward) [A-Z][a-z]+$/)) {
+        return false;
+      }
+      
+      // Skip system messages and status indicators
+      if (p.match(/^(Order|Payment|Transfer|Account|User|System|Status|Alert|Notification|Confirmation|Report|Summary|Overview|Update|Error|Warning|Success|Info|Help|Support) /)) {
+        return false;
+      }
+      
+      // Skip time-based phrases
+      if (p.match(/^(Morning|Afternoon|Evening|Night|Today|Tomorrow|Yesterday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday|January|February|March|April|May|June|July|August|September|October|November|December) /)) {
+        return false;
+      }
+      
+      // Accept only proper names with 2-3 parts, where each part is properly capitalized
+      const parts = p.split(' ');
+      return (
+        parts.length >= 2 && 
+        parts.length <= 3 && 
+        parts.every(part => part.match(/^[A-Z][a-z]{1,20}$/)) &&
+        !parts.some(part => part.match(/^(The|And|Or|Of|For|To|From|With|By|In|On|At)$/))
+      );
+    });
+
     // Create participant relationships
-    for (let i = 0; i < participants.length; i++) {
-      for (let j = i + 1; j < participants.length; j++) {
+    for (let i = 0; i < realParticipants.length; i++) {
+      for (let j = i + 1; j < realParticipants.length; j++) {
         // Determine relationship type based on context
         let type = "mentioned_together";
-        if (text.toLowerCase().includes("agree")) {
+        const context = text.toLowerCase();
+        if (context.includes("agree") || context.includes("approve") || context.includes("accept")) {
           type = "agreement";
-        } else if (text.toLowerCase().includes("disput")) {
+        } else if (context.includes("disput") || context.includes("disagree") || context.includes("object")) {
           type = "dispute";
-        } else if (text.toLowerCase().includes("discuss")) {
+        } else if (context.includes("discuss") || context.includes("conversation") || context.includes("meeting")) {
           type = "discussion";
         }
 
         doc = this.addParticipantRelationship(
           doc,
-          participants[i],
-          participants[j],
+          realParticipants[i],
+          realParticipants[j],
           type
         );
       }
     }
 
+    // Create topic relationships only between meaningful topics
+    const meaningfulTopics = topics.filter(t => 
+      !t.match(/^(general|misc|other)$/) && // Skip generic topics
+      t.length > 3 // Skip very short terms
+    );
+
     // Create topic relationships
-    for (let i = 0; i < topics.length; i++) {
-      for (let j = i + 1; j < topics.length; j++) {
-        doc = this.addTopicRelationship(doc, topics[i], topics[j], "related");
+    for (let i = 0; i < meaningfulTopics.length; i++) {
+      for (let j = i + 1; j < meaningfulTopics.length; j++) {
+        doc = this.addTopicRelationship(
+          doc,
+          meaningfulTopics[i],
+          meaningfulTopics[j],
+          "related"
+        );
       }
     }
 
