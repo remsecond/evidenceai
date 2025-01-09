@@ -1,93 +1,127 @@
 import fs from 'fs';
 import path from 'path';
+import BaseProcessor from '../base-processor.js';
 import pdfProcessor from '../pdf-processor.js';
 
 /**
- * Deepseek-specific PDF processor that extends the base processor
- * with optimizations for Deepseek's context handling and formatting preferences
+ * Deepseek-specific processor that extends base processor
+ * with Deepseek's context handling and formatting preferences
  */
-class DeepseekProcessor {
+class DeepseekProcessor extends BaseProcessor {
     constructor() {
-        this.baseProcessor = pdfProcessor;
+        super();
+        this.pdfProcessor = pdfProcessor;
         this.modelName = 'deepseek';
         
-        // Deepseek-specific settings
-        this.maxContextLength = 25000; // tokens
+        // Override with Deepseek-specific settings
+        this.maxInputSize = 25000; // tokens
         this.preferredChunkSize = 12000; // tokens
         this.overlapSize = 500; // tokens for context continuity
+        
+        // Deepseek formatting preferences
+        this.sectionMarker = '###';
+        this.emailMarker = '===';
+        this.listMarker = '•';
     }
 
     /**
-     * Process PDF with Deepseek-specific optimizations
+     * Process PDF with preprocessing and Deepseek-specific optimizations
      */
     async processPdf(filePath) {
-        // Get base processing result
-        const baseResult = await this.baseProcessor.processPdf(filePath);
+        // Get PDF processing result
+        const pdfResult = await this.pdfProcessor.processPdf(filePath);
         
-        // Enhance chunks with Deepseek-specific formatting
-        const enhancedChunks = baseResult.raw_content.chunks.map((chunk, index) => ({
-            text: this.formatForDeepseek(chunk.text),
-            metadata: {
-                ...chunk.metadata,
-                model: 'deepseek',
-                chunk_index: index + 1,
-                total_chunks: baseResult.raw_content.chunks.length,
-                context_window: this.maxContextLength,
-                processing_notes: this.getProcessingNotes(chunk)
-            },
-            estimated_tokens: chunk.estimated_tokens
-        }));
+        // Apply base preprocessing to each chunk
+        const processedChunks = await Promise.all(
+            pdfResult.raw_content.chunks.map(async (chunk, index) => {
+                // Pre-process chunk content
+                const processed = await this.preProcess(chunk.text);
+                
+                // Apply Deepseek-specific formatting
+                return {
+                    text: this.formatForDeepseek(processed.normalized),
+                    metadata: {
+                        ...chunk.metadata,
+                        ...processed.metadata,
+                        model: 'deepseek',
+                        chunk_index: index + 1,
+                        total_chunks: pdfResult.raw_content.chunks.length,
+                        context_window: this.maxInputSize,
+                        processing_notes: this.getProcessingNotes(processed)
+                    },
+                    structure: processed.structure,
+                    estimated_tokens: chunk.estimated_tokens
+                };
+            })
+        );
 
         return {
-            ...baseResult,
+            ...pdfResult,
             raw_content: {
-                ...baseResult.raw_content,
-                chunks: enhancedChunks
+                ...pdfResult.raw_content,
+                chunks: processedChunks
             },
             model_meta: {
                 name: this.modelName,
-                max_context_length: this.maxContextLength,
+                max_context_length: this.maxInputSize,
                 preferred_chunk_size: this.preferredChunkSize,
-                overlap_size: this.overlapSize
+                overlap_size: this.overlapSize,
+                formatting: {
+                    section_marker: this.sectionMarker,
+                    email_marker: this.emailMarker,
+                    list_marker: this.listMarker
+                }
             }
         };
     }
 
     /**
-     * Format text specifically for Deepseek's preferences
+     * Format text with Deepseek's preferences after preprocessing
      */
     formatForDeepseek(text) {
-        // Add clear section markers
-        text = text.replace(/\[Section: ([^\]]+)\]/g, '### $1 ###\n');
+        // Add section markers
+        text = text.replace(/\[Section: ([^\]]+)\]/g, `${this.sectionMarker} $1 ${this.sectionMarker}\n`);
         
-        // Enhance email formatting
-        text = text.replace(/Subject: /g, '\n=== Subject: ');
+        // Format email headers
+        text = text.replace(/^(From|To|Subject|Date|Cc): /gm, (match) => `\n${this.emailMarker} ${match}`);
         
-        // Add paragraph breaks for readability
-        text = text.replace(/\n{3,}/g, '\n\n');
+        // Format lists
+        text = text.replace(/^[-*]\s/gm, `${this.listMarker} `);
+        
+        // Add semantic markers
+        text = text.replace(/^(IMPORTANT|NOTE|WARNING):/gm, `${this.sectionMarker} $1 ${this.sectionMarker}`);
+        
+        // Enhance code blocks
+        text = text.replace(/```(\w+)?\n([\s\S]+?)```/g, (_, lang, code) => 
+            `${this.sectionMarker} CODE ${lang || ''} ${this.sectionMarker}\n${code.trim()}\n${this.sectionMarker} END CODE ${this.sectionMarker}`
+        );
         
         return text;
     }
 
     /**
-     * Generate processing notes for chunk metadata
+     * Generate enhanced processing notes based on preprocessing results
      */
-    getProcessingNotes(chunk) {
+    getProcessingNotes(processed) {
         const notes = [];
         
-        // Add structural notes
-        if (chunk.metadata.type === 'complete_document') {
-            notes.push('Complete document in single chunk');
-        } else if (chunk.metadata.continues) {
-            notes.push('Continues from previous chunk');
+        // Document structure notes
+        if (processed.metadata.context.document_type === 'email') {
+            notes.push('Email thread structure preserved');
+            notes.push(`Contains ${processed.metadata.structure.sections.length} email messages`);
         }
         
-        // Add content type notes
-        if (chunk.text.includes('Subject:')) {
-            notes.push('Contains email threads');
-        }
-        if (chunk.text.includes('Page')) {
-            notes.push('Contains page markers');
+        // Content formatting notes
+        const formatting = processed.metadata.context.formatting;
+        if (formatting.has_headers) notes.push('Section headers preserved');
+        if (formatting.has_lists) notes.push('List formatting enhanced');
+        if (formatting.has_tables) notes.push('Table structure maintained');
+        if (formatting.has_code_blocks) notes.push('Code blocks formatted');
+        
+        // Reference tracking
+        const refCount = processed.structure.references.size;
+        if (refCount > 0) {
+            notes.push(`Cross-references tracked: ${refCount}`);
         }
         
         return notes;
