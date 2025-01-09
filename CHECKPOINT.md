@@ -147,43 +147,57 @@ node test-base-processor.js
 
 ## Latest Improvements
 
-1. Enhanced Event Structure:
-- Section summaries with key points extraction
-- Standardized date formats with ISO conversion
-- Rich content annotations and tagging
-- Ambiguity detection and marking
+1. Enhanced Name Detection:
+- Comprehensive filters for titles, roles, and honorifics
+- Filters for product/service names and descriptions
+- Filters for organization names and types
+- Filters for location/building names
+- Filters for compound phrases and time references
 
 2. Processing Capabilities:
-- Handles 358-page documents in ~1.3 seconds
-- Processes 124,019 words into 1276 timeline events
-- Extracts 39 participant relationships
-- Maps 59 topic relationships
+- Handles 265-page documents in ~2.0 seconds
+- Processes 96,315 words into 2,718 timeline events
+- Extracts 276 participant relationships (reduced from 306)
+- Maps 71 topic relationships
 
-3. Content Analysis:
-- Key point detection:
-  * Decisions (agreed, resolved, approved)
-  * Actions (will, must, needs to)
-  * Deadlines (by, before, due)
-  * Disputes (disagree, contest, object)
+3. Name Filtering Categories:
+- System/Header Terms:
+  * Date, Subject, Message, System, Account, etc.
+- Time/Date References:
+  * Days, months, relative dates
+- Generic Greetings/Phrases:
+  * Good Morning, Hi There, Thank You, etc.
+- Titles and Roles:
+  * Dr, Mr, Mrs, Director, President, etc.
+- Product/Service Names:
+  * Equipment, Services, Solutions, etc.
+- Organization Names:
+  * Inc, LLC, Foundation, Association, etc.
+- Location/Building Names:
+  * Ave, St, Plaza, Park, Mall, etc.
 
-4. Content Annotations:
-- Primary type classification (legal, financial, parenting)
-- Importance marking (normal, high)
-- Ambiguity detection with context
-- Content tagging for quick reference
+4. Relationship Analysis:
+- Improved context detection:
+  * Agreement patterns (agree, approve, accept)
+  * Dispute patterns (disagree, object, contest)
+  * Discussion patterns (discuss, conversation, meeting)
+- Better name validation:
+  * 2-3 part proper names only
+  * Proper capitalization required
+  * No generic terms or prepositions
 
-5. Relationship Analysis:
-- Participant relationships with context:
-  * Agreement patterns
-  * Dispute identification
-  * Discussion tracking
+5. Content Processing:
+- Section summaries with key points
+- Standardized date formats
+- Rich content annotations
+- Ambiguity detection
 - Topic categorization:
-  * Communication (meetings, discussions, messages)
-  * Planning (schedules, deadlines, timelines)
-  * Documentation (reports, files, records)
-  * Legal (court, attorneys, hearings)
-  * Family (custody, visitation, support)
-  * Financial (payments, expenses, costs)
+  * Communication
+  * Planning
+  * Documentation
+  * Legal
+  * Family
+  * Financial
 
 ## Next Steps
 1. Implement model-specific processors extending base
