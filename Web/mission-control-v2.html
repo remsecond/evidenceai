@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvidenceAI Mission Control</title>
+    <style>
+        /* Base styles from original */
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        /* New stage-specific styles */
+        .stage {
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--light);
+            border-radius: 8px;
+            border-left: 4px solid var(--secondary);
+        }
+
+        .stage.active {
+            border-left-color: var(--accent);
+            background: white;
+        }
+
+        .stage.complete {
+            border-left-color: var(--success);
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .stage-name {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .stage-status {
+            font-size: 0.9em;
+            color: var(--secondary);
+        }
+
+        .stage-content {
+            display: none;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+        }
+
+        .stage.active .stage-content {
+            display: block;
+        }
+
+        .file-info {
+            margin: 15px 0;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            background: var(--light);
+            border-radius: 4px;
+        }
+
+        .info-item .label {
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        .validation-list {
+            list-style: none;
+            padding: 0;
+            margin: 10px 0;
+        }
+
+        .validation-item {
+            display: flex;
+            align-items: center;
+            padding: 5px 0;
+        }
+
+        .validation-item:before {
+            content: "•";
+            color: var(--secondary);
+            margin-right: 10px;
+        }
+
+        .validation-item.success:before {
+            content: "✓";
+            color: var(--success);
+        }
+
+        .validation-item.error:before {
+            content: "✗";
+            color: var(--danger);
+        }
+
+        /* Existing styles from mission-control.html */
+        /* ... (include all existing styles) ... */
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Document Processing Pipeline -->
+        <div class="card">
+            <div class="header">
+                <h2>Document Processing Pipeline</h2>
+                <span class="status running">Active</span>
+            </div>
+
+            <!-- Upload Zone -->
+            <div class="upload-zone" id="upload-zone">
+                <p>Drop PDF files here or click to upload</p>
+                <input type="file" id="file-input" style="display: none" accept=".pdf">
+            </div>
+
+            <!-- File Info -->
+            <div class="file-info" id="file-info" style="display: none;">
+                <h3>File Details</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">Name:</span>
+                        <span id="file-name"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Size:</span>
+                        <span id="file-size"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Type:</span>
+                        <span id="file-type"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Processing Stages -->
+            <div class="stages" id="processing-stages" style="display: none;">
+                <!-- Stage 1: PDF Processing -->
+                <div class="stage" id="stage-1">
+                    <div class="stage-header">
+                        <span class="stage-name">1. PDF Processing</span>
+                        <span class="stage-status">Waiting...</span>
+                    </div>
+                    <div class="stage-content">
+                        <div class="progress-bar">
+                            <div class="fill" style="width: 0%"></div>
+                        </div>
+                        <ul class="validation-list">
+                            <li class="validation-item">Extracting text content</li>
+                            <li class="validation-item">Processing structure</li>
+                            <li class="validation-item">Generating metadata</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Stage 2: Output Verification -->
+                <div class="stage" id="stage-2">
+                    <div class="stage-header">
+                        <span class="stage-name">2. Output Verification</span>
+                        <span class="stage-status">Pending</span>
+                    </div>
+                    <div class="stage-content">
+                        <ul class="validation-list">
+                            <li class="validation-item">Checking output files</li>
+                            <li class="validation-item">Validating structure</li>
+                            <li class="validation-item">Verifying metadata</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Stage 3: LLM Preparation -->
+                <div class="stage" id="stage-3">
+                    <div class="stage-header">
+                        <span class="stage-name">3. LLM Preparation</span>
+                        <span class="stage-status">Pending</span>
+                    </div>
+                    <div class="stage-content">
+                        <ul class="validation-list">
+                            <li class="validation-item">Generating prompts</li>
+                            <li class="validation-item">Preparing chunks</li>
+                            <li class="validation-item">Setting up context</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Stage 4: LLM Processing -->
+                <div class="stage" id="stage-4">
+                    <div class="stage-header">
+                        <span class="stage-name">4. LLM Processing</span>
+                        <span class="stage-status">Pending</span>
+                    </div>
+                    <div class="stage-content">
+                        <ul class="validation-list">
+                            <li class="validation-item">Processing with GPT-4</li>
+                            <li class="validation-item">Processing with Claude</li>
+                            <li class="validation-item">Generating consensus</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons" id="result-actions" style="display: none;">
+                <button class="primary" onclick="viewResults()">View Analysis Results</button>
+            </div>
+        </div>
+
+        <!-- Pipeline Monitor -->
+        <div class="card">
+            <div class="header">
+                <h2>Pipeline Monitor</h2>
+                <span class="status running">Healthy</span>
+            </div>
+            <div class="log" id="pipeline-log">
+                > System ready for processing
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File Upload and Processing
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const fileInfo = document.getElementById('file-info');
+        const stages = document.getElementById('processing-stages');
+        const resultActions = document.getElementById('result-actions');
+        const pipelineLog = document.getElementById('pipeline-log');
+
+        // File Upload Handlers
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = '';
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) processFile(files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) processFile(e.target.files[0]);
+        });
+
+        // Process File
+        async function processFile(file) {
+            if (!file.type.includes('pdf')) {
+                alert('Please upload a PDF file');
+                return;
+            }
+
+            // Display file info
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = formatFileSize(file.size);
+            document.getElementById('file-type').textContent = file.type;
+            fileInfo.style.display = 'block';
+
+            // Show stages
+            stages.style.display = 'block';
+            
+            // Process each stage
+            await processStage1();
+            await processStage2();
+            await processStage3();
+            await processStage4();
+
+            // Show results button
+            resultActions.style.display = 'block';
+        }
+
+        // Stage Processing
+        async function processStage1() {
+            const stage = document.getElementById('stage-1');
+            stage.classList.add('active');
+            updateLog('Starting PDF processing...');
+
+            const items = stage.querySelectorAll('.validation-item');
+            for (let item of items) {
+                await wait(1000);
+                item.classList.add('success');
+                updateLog(`Completed: ${item.textContent}`);
+            }
+
+            stage.classList.remove('active');
+            stage.classList.add('complete');
+            stage.querySelector('.stage-status').textContent = 'Complete';
+        }
+
+        async function processStage2() {
+            const stage = document.getElementById('stage-2');
+            stage.classList.add('active');
+            updateLog('Verifying outputs...');
+
+            const items = stage.querySelectorAll('.validation-item');
+            for (let item of items) {
+                await wait(1000);
+                item.classList.add('success');
+                updateLog(`Verified: ${item.textContent}`);
+            }
+
+            stage.classList.remove('active');
+            stage.classList.add('complete');
+            stage.querySelector('.stage-status').textContent = 'Complete';
+        }
+
+        async function processStage3() {
+            const stage = document.getElementById('stage-3');
+            stage.classList.add('active');
+            updateLog('Preparing for LLM processing...');
+
+            const items = stage.querySelectorAll('.validation-item');
+            for (let item of items) {
+                await wait(1000);
+                item.classList.add('success');
+                updateLog(`Prepared: ${item.textContent}`);
+            }
+
+            stage.classList.remove('active');
+            stage.classList.add('complete');
+            stage.querySelector('.stage-status').textContent = 'Complete';
+        }
+
+        async function processStage4() {
+            const stage = document.getElementById('stage-4');
+            stage.classList.add('active');
+            updateLog('Processing with LLMs...');
+
+            const items = stage.querySelectorAll('.validation-item');
+            for (let item of items) {
+                await wait(1500);
+                item.classList.add('success');
+                updateLog(`Completed: ${item.textContent}`);
+            }
+
+            stage.classList.remove('active');
+            stage.classList.add('complete');
+            stage.querySelector('.stage-status').textContent = 'Complete';
+            updateLog('All processing complete!');
+        }
+
+        // Utility Functions
+        function formatFileSize(bytes) {
+            const units = ['B', 'KB', 'MB', 'GB'];
+            let size = bytes;
+            let unitIndex = 0;
+            while (size >= 1024 && unitIndex < units.length - 1) {
+                size /= 1024;
+                unitIndex++;
+            }
+            return `${size.toFixed(1)} ${units[unitIndex]}`;
+        }
+
+        function updateLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            pipelineLog.innerHTML = `> ${timestamp} ${message}\n${pipelineLog.innerHTML}`;
+        }
+
+        function wait(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        function viewResults() {
+            window.location.href = '/Web/components/llm-comparison.html';
+        }
+    </script>
+</body>
+</html>
