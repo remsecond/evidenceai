@@ -32,6 +32,13 @@
 - Token management
 - Test suite for spreadsheet operations
 
+#### Document Tracking System
+- "Library Catalog" spreadsheet template
+- Document status tracking
+- Processing queue management
+- Category organization system
+- Metadata management framework
+
 ### Planned - Google Integration Phase 2 & 3
 
 #### Phase 2: Detective's Workspace (Google Drive)
