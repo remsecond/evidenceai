@@ -6,101 +6,209 @@ This guide synthesizes our learnings and best practices for selecting AI models 
 
 ## Model Capabilities Matrix
 
-### 1. GPT-4 (Primary Model)
+### 1. GPT-4 (OpenAI)
 ```javascript
 const gpt4Capabilities = {
+  overview: "Fourth generation GPT, excelling in deep contextual understanding and reasoning",
   strengths: {
-    documentAnalysis: {
-      contentUnderstanding: "Superior",
-      entityExtraction: "Highly accurate",
-      patternRecognition: "Complex and nuanced",
-      contextRetention: "Excellent"
-    },
-    timelineGeneration: {
-      eventOrdering: "Precise",
-      causalityAnalysis: "Deep understanding",
-      contextPreservation: "Strong"
-    },
-    reportGeneration: {
-      summaryQuality: "Detailed and coherent",
-      patternExplanation: "Clear and insightful",
-      evidenceCorrelation: "Strong connections"
-    }
+    contextualUnderstanding: "Handles nuanced contexts with high accuracy",
+    patternRecognition: "Identifies complex patterns and relationships",
+    outputFormats: "Flexible for diverse formats (summaries, reports, timelines)",
+    contextWindow: "8K-32K tokens for detailed analysis"
   },
   bestFor: [
-    "Complex document analysis",
-    "Nuanced pattern recognition",
-    "Detailed report generation",
-    "High-stakes analysis"
+    "Legal document parsing and summarization",
+    "Long-form content generation",
+    "Advanced timeline generation",
+    "Causality analysis"
   ],
   considerations: {
-    cost: "Higher API costs",
-    access: "Rate limitations",
-    tokens: "Context window limits",
-    latency: "Response time variability"
+    cost: "Higher usage fees",
+    contextLimits: "Requires chunking beyond token limit",
+    fineTuning: "Not available, uses prompt engineering"
   }
 };
 ```
 
-### 2. Claude (Secondary Model)
+### 2. Claude (Anthropic)
 ```javascript
 const claudeCapabilities = {
+  overview: "Safety-focused model with extensive context window (100K tokens)",
   strengths: {
-    documentAnalysis: {
-      longFormContent: "Exceptional",
-      technicalParsing: "Very strong",
-      contextWindow: "Up to 100k tokens"
-    },
-    validation: {
-      crossChecking: "Reliable",
-      biasDetection: "Strong",
-      consistencyChecking: "Thorough"
-    },
-    specializedAnalysis: {
-      legalDocuments: "Precise handling",
-      technicalContent: "Accurate parsing",
-      complexPatterns: "Good recognition"
-    }
+    contextWindow: "Handles very long documents",
+    structuredOutput: "Generates coherent, organized content",
+    safetyFocus: "Ethical and safe AI practices",
+    validation: "Strong cross-checking capabilities"
   },
   bestFor: [
-    "Long document processing",
-    "Technical document analysis",
-    "Validation tasks",
-    "Legal content parsing"
+    "Long-form document analysis",
+    "Validation of GPT-4 results",
+    "Structured report generation",
+    "Complex document processing"
   ],
   considerations: {
-    cost: "More cost-effective for long texts",
-    integration: "Different API structure",
-    formatting: "May need output adjustment"
+    nuance: "Slightly less detailed than GPT-4",
+    availability: "API access limitations",
+    integration: "Different API structure"
   }
 };
 ```
 
-### 3. BERT Variants (Specialized Tasks)
+### 3. T5 (Google)
 ```javascript
-const bertCapabilities = {
+const t5Capabilities = {
+  overview: "Text-to-text transformer for flexible NLP tasks",
   strengths: {
-    entityExtraction: "Strong with fine-tuning",
-    classification: "Excellent for specific domains",
-    understanding: "Good for structured content"
+    taskFlexibility: "Adaptable for various NLP tasks",
+    fineTuning: "Easy to customize",
+    efficiency: "Balanced performance"
   },
   bestFor: [
-    "Specific domain tasks",
-    "Entity recognition",
-    "Classification tasks",
+    "Summarization tasks",
+    "Event ordering",
+    "Educational content",
     "Budget-conscious projects"
   ],
   considerations: {
+    complexity: "Needs fine-tuning for advanced tasks",
+    contextWindow: "Smaller than GPT-4/Claude",
+    setup: "Requires technical expertise"
+  }
+};
+```
+
+### 4. BERT Variants
+```javascript
+const bertCapabilities = {
+  overview: "Bidirectional understanding with variants (RoBERTa, ALBERT)",
+  strengths: {
+    entityExtraction: "Strong NER capabilities",
+    efficiency: "Good for moderate complexity",
+    domainAdaptation: "Flexible fine-tuning"
+  },
+  bestFor: [
+    "Named entity recognition",
+    "Sentiment analysis",
+    "Classification tasks",
+    "Domain-specific applications"
+  ],
+  considerations: {
+    complexity: "Limited compared to GPT-4",
     training: "Requires fine-tuning",
-    complexity: "Less flexible than GPT-4",
-    setup: "More initial configuration"
+    context: "Smaller context window"
+  }
+};
+```
+
+### 5. LLaMA 2 (Meta)
+```javascript
+const llama2Capabilities = {
+  overview: "Open-source model for customization and on-premises deployment",
+  strengths: {
+    accessibility: "Full code access",
+    costEfficiency: "No API fees",
+    scalability: "Enterprise customization"
+  },
+  bestFor: [
+    "Privacy-focused deployments",
+    "Research applications",
+    "Custom domain solutions"
+  ],
+  considerations: {
+    resources: "High computational needs",
+    expertise: "Requires technical team",
+    setup: "Complex initial deployment"
+  }
+};
+```
+
+### 6. NotebookLM (Google)
+```javascript
+const notebookLMCapabilities = {
+  overview: "Specialized model for document understanding and knowledge work",
+  strengths: {
+    documentGrounding: "Deep understanding of source materials",
+    citationTracking: "Maintains clear links to sources",
+    contextAwareness: "Understands document relationships",
+    knowledgeIntegration: "Connects information across sources"
+  },
+  bestFor: [
+    "Research synthesis",
+    "Document-based analysis",
+    "Source-grounded responses",
+    "Knowledge work"
+  ],
+  uniqueValue: {
+    sourceTracking: "Always knows where information came from",
+    contextualAnswers: "Responses tied to specific documents",
+    knowledgeWork: "Ideal for research and analysis",
+    accuracy: "High reliability due to source grounding"
+  },
+  considerations: {
+    access: "Limited availability through specific interface",
+    integration: "Different workflow than traditional LLMs",
+    scope: "Best with defined document sets"
+  }
+};
+```
+
+### 7. Additional Models
+```javascript
+const additionalModels = {
+  cohereCommand: {
+    overview: "Enterprise-focused text generation",
+    strengths: ["Developer-friendly", "Versatile tasks", "Cost-efficient"],
+    considerations: ["Limited context", "Less advanced than GPT-4"]
+  },
+  jurassic2: {
+    overview: "GPT alternative for content generation",
+    strengths: ["High-quality output", "API accessibility", "Cost-effective"],
+    considerations: ["Limited adoption", "Less complex reasoning"]
+  },
+  falcon: {
+    overview: "Open-source focus on scalability",
+    strengths: ["Enterprise deployment", "Customizable", "Efficient"],
+    considerations: ["Needs fine-tuning", "Smaller ecosystem"]
   }
 };
 ```
 
 ## Task-Based Selection Guide
 
-### 1. Document Analysis
+### 1. Research and Knowledge Work
+```javascript
+const researchGuide = {
+  documentAnalysis: {
+    model: "NotebookLM",
+    reasons: [
+      "Source-grounded responses",
+      "Clear citation tracking",
+      "Deep document understanding",
+      "Knowledge integration"
+    ]
+  },
+  synthesis: {
+    model: "NotebookLM",
+    reasons: [
+      "Connects information across sources",
+      "Maintains context awareness",
+      "High accuracy with sources",
+      "Research-oriented workflow"
+    ]
+  },
+  validation: {
+    model: "NotebookLM",
+    reasons: [
+      "Source verification built-in",
+      "Clear evidence tracking",
+      "Reliable fact-checking",
+      "Context preservation"
+    ]
+  }
+};
+```
+
+### 2. Document Analysis
 ```javascript
 const documentAnalysisGuide = {
   highComplexity: {
