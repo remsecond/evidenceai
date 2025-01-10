@@ -24,3 +24,7 @@ test-files/
 # Temporary files
 *.log
 *.tmp
+
+# Google authentication
+/config/google-auth-config.js
+google-token.json
