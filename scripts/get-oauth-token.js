@@ -1,10 +1,17 @@
 import express from 'express';
 import { google } from 'googleapis';
 import open from 'open';
-import { getLogger } from '../src/utils/logging.js';
 import fs from 'fs';
+import dotenv from 'dotenv';
 
-const logger = getLogger();
+// Load environment variables
+dotenv.config();
+
+// Initialize logger
+const logger = {
+    info: console.log,
+    error: console.error
+};
 
 // OAuth 2.0 client configuration
 const oauth2Client = new google.auth.OAuth2(
