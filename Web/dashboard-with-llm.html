@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvidenceAI Dashboard</title>
+    <link rel="stylesheet" href="components/llm-comparison.html">
+    <style>
+        /* Include existing dashboard styles */
+        :root {
+            --primary-blue: #007AFF;
+            --success-green: #34C759;
+            --warning-orange: #FF9500;
+            --danger-red: #FF3B30;
+            --background-primary: #F5F5F7;
+            --card-background: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --border-radius: 12px;
+            --spacing-unit: 16px;
+        }
+
+        body {
+            background-color: var(--background-primary);
+            color: var(--text-primary);
+            padding: var(--spacing-unit);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: var(--spacing-unit);
+            max-width: 1440px;
+            margin: 0 auto;
+        }
+
+        .upload-section {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2);
+            text-align: center;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--primary-blue);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 2);
+            margin: var(--spacing-unit) 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .upload-zone:hover {
+            background: rgba(0, 122, 255, 0.05);
+        }
+
+        .processing-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: var(--spacing-unit);
+            margin: var(--spacing-unit) 0;
+        }
+
+        .processing-indicator.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--background-primary);
+            border-top: 3px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #results-section {
+            display: none;
+        }
+
+        #results-section.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="upload-section">
+        <h2>Document Analysis</h2>
+        <div class="upload-zone" id="upload-zone">
+            <p>Drop PDF files here or click to upload</p>
+            <input type="file" id="file-input" style="display: none" accept=".pdf">
+        </div>
+        <div class="processing-indicator" id="processing-indicator">
+            <div class="spinner"></div>
+            <span>Processing document with multiple LLMs...</span>
+        </div>
+    </div>
+
+    <div id="results-section"></div>
+
+    <script>
+        // Load the LLM comparison component
+        async function loadLLMComparison() {
+            const response = await fetch('components/llm-comparison.html');
+            const html = await response.text();
+            const resultsSection = document.getElementById('results-section');
+            resultsSection.innerHTML = html;
+            resultsSection.classList.add('active');
+        }
+
+        // Handle file upload
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const processingIndicator = document.getElementById('processing-indicator');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--primary-blue');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = '';
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) processFile(files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) processFile(e.target.files[0]);
+        });
+
+        async function processFile(file) {
+            if (!file.type.includes('pdf')) {
+                alert('Please upload a PDF file');
+                return;
+            }
+
+            processingIndicator.classList.add('active');
+            
+            // Simulate processing time
+            setTimeout(async () => {
+                processingIndicator.classList.remove('active');
+                await loadLLMComparison();
+            }, 2000);
+
+            // In real implementation:
+            // 1. Upload file to server
+            // 2. Process with multiple LLMs
+            // 3. Get results and display comparison
+        }
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check for active processing
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('processing') === 'true') {
+                processingIndicator.classList.add('active');
+                setTimeout(async () => {
+                    processingIndicator.classList.remove('active');
+                    await loadLLMComparison();
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
