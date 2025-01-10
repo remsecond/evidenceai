@@ -12,12 +12,28 @@ See [CHECKPOINT.md](CHECKPOINT.md) for latest working features and progress.
 - Multi-model support (claude, deepseek, gpt4, notebooklm, sonnet)
 - Structure-preserving text extraction
 - Detailed metadata and reporting
+- Google Sheets integration for data tracking and reporting
 
 ## Installation
 
 ```bash
 npm install
 ```
+
+### Google Sheets Setup
+
+1. Configure Google Cloud credentials:
+```bash
+cp .env.example .env
+# Add your Google OAuth credentials to .env
+```
+
+2. Run the OAuth setup:
+```bash
+node scripts/get-oauth-token.js
+```
+
+See [Google Integration Setup](docs/setup/google_integration_setup.md) for detailed instructions.
 
 ## Usage
 
