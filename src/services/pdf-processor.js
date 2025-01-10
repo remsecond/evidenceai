@@ -36,121 +36,75 @@ export class PDFProcessor extends BaseProcessor {
       // Handle single file or array of files
       const paths = Array.isArray(filePaths) ? filePaths : [filePaths];
 
-      // Create base document
-      let doc = this.createBaseDocument(paths[0]); // Use first file as primary
-
-      // Add task-specific metadata
-      doc.metadata.task = {
-        objective: options.taskObjective || "General document processing",
-        sample_queries: options.sampleQueries || [],
-        domain_terminology: options.domainTerminology || {},
+      // Initialize result structure
+      let result = {
+        raw_content: {
+          text: "",
+          chunks: [],
+          structure: {}
+        },
+        file_info: {},
+        statistics: {},
+        processing_meta: {
+          timestamp: new Date().toISOString(),
+          version: "1.0"
+        }
       };
 
       // Process each file
-      const allPdfData = await Promise.all(
-        paths.map(async (path) => {
-          // Get file stats
-          const stats = fs.statSync(path);
-          const fileInfo = {
-            path: path,
-            size_bytes: stats.size,
-            size_mb: (stats.size / (1024 * 1024)).toFixed(2),
-            created: stats.birthtime,
-            modified: stats.mtime,
-          };
+      for (const filePath of paths) {
+        // Get file stats
+        const stats = fs.statSync(filePath);
+        result.file_info = {
+          path: filePath,
+          size_bytes: stats.size,
+          size_mb: (stats.size / (1024 * 1024)).toFixed(2),
+          created: stats.birthtime,
+          modified: stats.mtime
+        };
 
-          // Read and parse PDF
-          const dataBuffer = fs.readFileSync(path);
-          const pdfData = await pdfParse(dataBuffer, { max: 0 });
+        // Read and parse PDF
+        const dataBuffer = fs.readFileSync(filePath);
+        const pdfData = await pdfParse(dataBuffer);
+        
+        // Store full text
+        result.raw_content.text = pdfData.text;
 
-          return {
-            path,
-            fileInfo,
-            pdfData,
-            text: pdfData.text,
-          };
-        })
-      );
-
-      // Process all documents
-      for (const pdfData of allPdfData) {
-        // Process content into timeline events
+        // Split into chunks
         const sections = this.identifySections(pdfData.text);
-
-        // Create document summary section
-        doc = this.addTimelineEvent(doc, {
-          type: "summary",
-          content: "Document Summary",
-          source_file: pdfData.path,
-          key_points: this.extractKeyPoints(pdfData.text),
-          participants: this.extractParticipants(pdfData.text),
-          topics: this.extractTopics(pdfData.text),
-          metadata: {
-            type: "document_summary",
-            importance: "high",
-          },
-        });
-
-        // Process each section
+        let chunkIndex = 0;
+        
         for (const section of sections) {
-          // Create section header with table summary
-          const summary = this.createSectionSummary(section);
-          doc = this.addTimelineEvent(doc, {
-            type: "section",
-            content: summary,
-            source_file: pdfData.path,
-            participants: [], // Will be extracted from content
-            topics: this.extractTopics(section.content),
-          });
-
-          // Process section content into events
-          const contentEvents = this.processContentIntoEvents(section.content);
-          for (const event of contentEvents) {
-            doc = this.addTimelineEvent(doc, event);
-          }
-
-          // Extract and add relationships
-          doc = this.extractRelationships(section.content, doc);
+          // Create chunk from section
+          const chunk = {
+            text: section.content,
+            metadata: {
+              section: section.header || `Section ${chunkIndex + 1}`,
+              type: 'section',
+              position: chunkIndex,
+              continues: chunkIndex < sections.length - 1,
+              part: chunkIndex + 1,
+              total_parts: sections.length,
+              estimated_tokens: Math.ceil(section.content.length / 4)
+            }
+          };
+          
+          result.raw_content.chunks.push(chunk);
+          chunkIndex++;
         }
+
+        // Add statistics
+        result.statistics = this.calculateStatistics(pdfData.text);
+        result.processing_meta.processing_time_ms = Date.now() - startTime;
       }
 
-      // Cross-reference and consolidate insights
-      doc = this.crossReferenceDocuments(doc, allPdfData);
-
-      // Add consolidated metadata
-      doc.metadata = {
-        ...doc.metadata,
-        pdf_info: allPdfData.map((pdf) => ({
-          path: pdf.path,
-          pages: pdf.pdfData.numpages,
-          version: pdf.pdfData.pdfInfo?.PDFFormatVersion,
-          info: pdf.pdfData.info,
-        })),
-        statistics: this.calculateCombinedStatistics(allPdfData),
-        processing_meta: {
-          timestamp: new Date().toISOString(),
-          version: "1.0",
-          processing_time_ms: Date.now() - startTime,
-          files_processed: allPdfData.length,
-        },
-      };
-
-      // Validate final document
-      const validationResult = await this.validateData(doc);
-      if (!validationResult.isValid) {
-        logger.error("Validation failed:", validationResult.errors);
-        doc = this.updateValidationStatus(doc, "invalid");
-        return doc;
-      }
-
-      doc = this.updateValidationStatus(doc, "valid");
       logger.info("PDF processing complete", {
-        pages: doc.metadata.pdf_info.pages,
-        events: doc.timeline.events.length,
-        processing_time: doc.metadata.processing_meta.processing_time_ms,
+        pages: result.statistics.pages,
+        events: result.raw_content.chunks.length,
+        processing_time: result.processing_meta.processing_time_ms
       });
 
-      return doc;
+      return result;
     } catch (error) {
       logger.error("Error processing PDF:", error);
       throw error;

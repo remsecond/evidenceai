@@ -25,6 +25,32 @@ class DeepseekProcessor extends BaseProcessor {
     }
 
     /**
+     * Pre-process text before Deepseek-specific formatting
+     */
+    async preProcess(text) {
+        return {
+            normalized: text,
+            metadata: {
+                type: 'text',
+                format: 'plain',
+                context: {
+                    document_type: 'text',
+                    formatting: {
+                        has_headers: false,
+                        has_lists: false,
+                        has_tables: false,
+                        has_code_blocks: false
+                    }
+                }
+            },
+            structure: {
+                sections: [],
+                references: new Set()
+            }
+        };
+    }
+
+    /**
      * Process PDF with preprocessing and Deepseek-specific optimizations
      */
     async processPdf(filePath) {
@@ -106,20 +132,21 @@ class DeepseekProcessor extends BaseProcessor {
         const notes = [];
         
         // Document structure notes
-        if (processed.metadata.context.document_type === 'email') {
+        const docType = processed.metadata?.context?.document_type || 'text';
+        if (docType === 'email') {
             notes.push('Email thread structure preserved');
-            notes.push(`Contains ${processed.metadata.structure.sections.length} email messages`);
+            notes.push(`Contains ${processed.structure?.sections?.length || 0} email messages`);
         }
         
         // Content formatting notes
-        const formatting = processed.metadata.context.formatting;
+        const formatting = processed.metadata?.context?.formatting || {};
         if (formatting.has_headers) notes.push('Section headers preserved');
         if (formatting.has_lists) notes.push('List formatting enhanced');
         if (formatting.has_tables) notes.push('Table structure maintained');
         if (formatting.has_code_blocks) notes.push('Code blocks formatted');
         
         // Reference tracking
-        const refCount = processed.structure.references.size;
+        const refCount = processed.structure?.references?.size || 0;
         if (refCount > 0) {
             notes.push(`Cross-references tracked: ${refCount}`);
         }
