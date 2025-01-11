@@ -133,14 +133,6 @@
                 <h2>Document Processing</h2>
                 <span class="status running">Active</span>
             </div>
-<<<<<<< HEAD
-            <div class="upload-zone" id="upload-zone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="triggerUpload()">
-                <p>Drop PDF files here or click to upload</p>
-                <input type="file" id="file-input" style="display: none" accept=".pdf" onchange="handleFiles(event)">
-            </div>
-            <div class="progress-bar">
-                <div class="fill" id="progress-bar-fill" style="width: 0%"></div>
-=======
             <div class="upload-zone" id="upload-zone">
                 <p>Drop PDF files here or click to upload</p>
                 <input type="file" id="file-input" style="display: none" accept=".pdf">
@@ -152,7 +144,6 @@
                 <div class="spinner"></div>
                 <span>Processing with multiple LLMs...</span>
                 <div class="stage-indicator">Stage: <span id="current-stage">Initializing</span></div>
->>>>>>> main
             </div>
             <div class="metrics">
                 <div class="metric">
@@ -234,35 +225,6 @@
     </div>
 
     <script>
-<<<<<<< HEAD
-        // File Upload Handling
-        function triggerUpload() {
-            document.getElementById('file-input').click();
-        }
-
-        function handleDragOver(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            document.getElementById('upload-zone').style.borderColor = '#3498db';
-        }
-
-        function handleDrop(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            document.getElementById('upload-zone').style.borderColor = '';
-            
-            const files = event.dataTransfer.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-        }
-
-        function handleFiles(event) {
-            const files = event.target.files;
-            if (files.length > 0) {
-                processFile(files[0]);
-            }
-=======
         // System Control
         function stopSystem() {
             fetch('/api/system/stop')
@@ -340,96 +302,14 @@
         function viewResults() {
             // Load the LLM comparison view
             window.location.href = '/Web/components/llm-comparison.html';
->>>>>>> main
-        }
-
-        async function processFile(file) {
-            if (!file.type.includes('pdf')) {
-                alert('Please upload a PDF file');
-                return;
-            }
-
-            // Update UI to processing state
-            document.getElementById('progress-bar-fill').style.width = '50%';
-            document.getElementById('processed-count').textContent = '...';
-            document.getElementById('queue-count').textContent = '1';
-
-            const formData = new FormData();
-            formData.append('file', file);
-
-            try {
-                const response = await fetch('/process', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Processing failed: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                
-                if (result.status === 'success') {
-                    updateResults(result);
-                    document.getElementById('progress-bar-fill').style.width = '100%';
-                    document.getElementById('processed-count').textContent = 
-                        (parseInt(document.getElementById('processed-count').textContent || '0') + 1).toString();
-                    document.getElementById('queue-count').textContent = '0';
-                } else {
-                    throw new Error(result.message || 'Processing failed');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                document.getElementById('progress-bar-fill').style.width = '0%';
-                document.getElementById('queue-count').textContent = '0';
-                alert(`Error processing file: ${error.message}`);
-            }
-        }
-
-        function updateResults(result) {
-            // Update metrics
-            document.getElementById('page-count').textContent = result.result.statistics.pages || '-';
-            document.getElementById('word-count').textContent = result.result.statistics.words || '-';
-            document.getElementById('chunk-count').textContent = result.result.statistics.chunks || '-';
-
-            // Update participants
-            const participantsList = document.getElementById('participants-list');
-            participantsList.innerHTML = Array.from(result.result.content.participants || [])
-                .map(p => `<span class="tag">${p}</span>`)
-                .join('');
-
-            // Update topics
-            const topicsList = document.getElementById('topics-list');
-            topicsList.innerHTML = Array.from(result.result.content.topics || [])
-                .map(t => `<span class="tag">${t}</span>`)
-                .join('');
-
-            // Update file lists
-            const rawFiles = document.getElementById('raw-files');
-            rawFiles.innerHTML = result.result.output_structure.raw.files
-                .map(f => `<li>${f}</li>`)
-                .join('');
-
-            const notebookFiles = document.getElementById('notebook-files');
-            notebookFiles.innerHTML = result.result.output_structure.notebook.files
-                .map(f => `<li>${f}</li>`)
-                .join('');
-
-            const llmFiles = document.getElementById('llm-files');
-            llmFiles.innerHTML = result.result.output_structure.llm.files
-                .map(f => `<li>${f}</li>`)
-                .join('');
-
-            // Update preview
-            document.getElementById('content-preview').textContent = result.result.content.text || '';
         }
 
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
             // Reset UI
-            document.getElementById('progress-bar-fill').style.width = '0%';
-            document.getElementById('processed-count').textContent = '0';
-            document.getElementById('queue-count').textContent = '0';
+            progressFill.style.width = '0%';
+            processedCount.textContent = '0';
+            queueCount.textContent = '0';
         });
     </script>
 </body>
