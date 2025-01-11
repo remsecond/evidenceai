@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Comparison View</title>
+    <style>
+        :root {
+            --primary-blue: #007AFF;
+            --success-green: #34C759;
+            --warning-orange: #FF9500;
+            --danger-red: #FF3B30;
+            --background-primary: #F5F5F7;
+            --card-background: #FFFFFF;
+            --text-primary: #1D1D1F;
+            --text-secondary: #86868B;
+            --border-radius: 12px;
+            --spacing-unit: 16px;
+        }
+
+        .llm-comparison {
+            background: var(--card-background);
+            border-radius: var(--border-radius);
+            padding: calc(var(--spacing-unit) * 1.5);
+            margin: var(--spacing-unit);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--spacing-unit);
+            margin: var(--spacing-unit) 0;
+        }
+
+        .model-card {
+            background: var(--background-primary);
+            border-radius: calc(var(--border-radius) - 4px);
+            padding: var(--spacing-unit);
+        }
+
+        .model-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .model-name {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .score-badge {
+            background: var(--primary-blue);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: calc(var(--spacing-unit) / 2);
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .metric-box {
+            background: var(--card-background);
+            padding: calc(var(--spacing-unit) / 2);
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary-blue);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .response-text {
+            background: var(--card-background);
+            padding: var(--spacing-unit);
+            border-radius: 8px;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 13px;
+            line-height: 1.5;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: var(--spacing-unit);
+        }
+
+        .consensus-panel {
+            background: #F0F9FF;
+            border-left: 4px solid var(--primary-blue);
+            padding: var(--spacing-unit);
+            margin: var(--spacing-unit) 0;
+            border-radius: calc(var(--border-radius) - 4px);
+        }
+
+        .consensus-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary-blue);
+        }
+
+        .consensus-points {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .consensus-points li {
+            margin-bottom: 4px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .consensus-points li:before {
+            content: "•";
+            color: var(--primary-blue);
+            position: absolute;
+            left: 0;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: var(--spacing-unit);
+        }
+
+        .tag {
+            background: var(--background-primary);
+            padding: 4px 12px;
+            border-radius: 16px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .export-section {
+            margin-top: var(--spacing-unit);
+            padding-top: var(--spacing-unit);
+            border-top: 1px solid var(--background-primary);
+        }
+
+        .button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .button.primary {
+            background: var(--primary-blue);
+            color: white;
+        }
+
+        .button.secondary {
+            background: var(--background-primary);
+            color: var(--text-primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="llm-comparison">
+        <h2>Multi-LLM Analysis Results</h2>
+        
+        <div class="model-grid">
+            <!-- GPT-4 Card -->
+            <div class="model-card">
+                <div class="model-header">
+                    <span class="model-name">GPT-4</span>
+                    <span class="score-badge">0.92</span>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-value">98%</div>
+                        <div class="metric-label">Accuracy</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">1.2s</div>
+                        <div class="metric-label">Response Time</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">95%</div>
+                        <div class="metric-label">Consistency</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">850</div>
+                        <div class="metric-label">Tokens</div>
+                    </div>
+                </div>
+                <div class="response-text">
+                    The document appears to be a technical specification for a cloud-based system. Key points include:
+                    1. Scalability requirements
+                    2. Security protocols
+                    3. Integration endpoints
+                </div>
+                <div class="tag-list">
+                    <span class="tag">#technical</span>
+                    <span class="tag">#detailed</span>
+                    <span class="tag">#comprehensive</span>
+                </div>
+            </div>
+
+            <!-- Claude Card -->
+            <div class="model-card">
+                <div class="model-header">
+                    <span class="model-name">Claude</span>
+                    <span class="score-badge">0.89</span>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-box">
+                        <div class="metric-value">96%</div>
+                        <div class="metric-label">Accuracy</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">0.9s</div>
+                        <div class="metric-label">Response Time</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">92%</div>
+                        <div class="metric-label">Consistency</div>
+                    </div>
+                    <div class="metric-box">
+                        <div class="metric-value">920</div>
+                        <div class="metric-label">Tokens</div>
+                    </div>
+                </div>
+                <div class="response-text">
+                    Technical specification document detailing:
+                    1. Cloud infrastructure requirements
+                    2. Security measures and protocols
+                    3. API integration specifications
+                </div>
+                <div class="tag-list">
+                    <span class="tag">#analytical</span>
+                    <span class="tag">#structured</span>
+                    <span class="tag">#efficient</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="consensus-panel">
+            <div class="consensus-title">Model Consensus</div>
+            <ul class="consensus-points">
+                <li>Document type identified as technical specification</li>
+                <li>Primary focus on cloud infrastructure and security</li>
+                <li>Integration requirements clearly outlined</li>
+                <li>Scalability considerations present</li>
+            </ul>
+        </div>
+
+        <div class="export-section">
+            <button class="button primary">Export to TagSpaces</button>
+            <button class="button secondary">View Full Analysis</button>
+        </div>
+    </div>
+
+    <script>
+        // Example data structure for responses
+        const responseData = {
+            query: {
+                prompt: "Analyze the technical documentation",
+                timestamp: new Date().toISOString(),
+                context: "PDF document analysis",
+                tags: ["technical", "documentation", "analysis"]
+            },
+            responses: [
+                {
+                    model: "gpt4",
+                    version: "4.0",
+                    response: "Technical specification analysis...",
+                    metrics: {
+                        latency: 1.2,
+                        tokens: 850,
+                        cost: 0.02
+                    },
+                    analysis: {
+                        accuracy: 0.98,
+                        relevance: 0.95,
+                        hallucination: 0.02
+                    }
+                },
+                {
+                    model: "claude",
+                    version: "2.0",
+                    response: "Technical documentation review...",
+                    metrics: {
+                        latency: 0.9,
+                        tokens: 920,
+                        cost: 0.018
+                    },
+                    analysis: {
+                        accuracy: 0.96,
+                        relevance: 0.94,
+                        hallucination: 0.03
+                    }
+                }
+            ]
+        };
+
+        // Handle export button click
+        document.querySelector('.button.primary').addEventListener('click', () => {
+            const exportData = {
+                ...responseData,
+                exportTimestamp: new Date().toISOString(),
+                consensusPoints: [
+                    "Document type identified as technical specification",
+                    "Primary focus on cloud infrastructure and security",
+                    "Integration requirements clearly outlined",
+                    "Scalability considerations present"
+                ]
+            };
+
+            // In real implementation, this would call our TagSpaces integration
+            console.log('Exporting to TagSpaces:', exportData);
+        });
+    </script>
+</body>
+</html>

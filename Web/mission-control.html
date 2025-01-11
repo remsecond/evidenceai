@@ -74,6 +74,43 @@
             max-height: 200px;
             overflow-y: auto;
         }
+
+        .spinner {
+            width: 24px;
+            height: 24px;
+            border: 3px solid var(--light);
+            border-top: 3px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .processing-status {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            margin: 10px 0;
+            background: var(--light);
+            border-radius: 5px;
+        }
+
+        .stage-indicator {
+            margin-left: auto;
+            font-size: 0.9em;
+            color: var(--secondary);
+        }
+
+        .action-buttons {
+            margin-top: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
     </style>
 </head>
 <body>
@@ -82,21 +119,7 @@
         <div class="card">
             <div class="header">
                 <h2>System Status</h2>
-                <span class="status running">Running</span>
-            </div>
-            <div class="metrics">
-                <div class="metric">
-                    <div class="value">4</div>
-                    <div class="label">Active Services</div>
-                </div>
-                <div class="metric">
-                    <div class="value">2</div>
-                    <div class="label">Processing</div>
-                </div>
-                <div class="metric">
-                    <div class="value">98%</div>
-                    <div class="label">Uptime</div>
-                </div>
+                <span class="status running">Active</span>
             </div>
             <div class="controls">
                 <button class="danger" onclick="stopSystem()">Stop System</button>
@@ -110,12 +133,26 @@
                 <h2>Document Processing</h2>
                 <span class="status running">Active</span>
             </div>
+<<<<<<< HEAD
             <div class="upload-zone" id="upload-zone" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" onclick="triggerUpload()">
                 <p>Drop PDF files here or click to upload</p>
                 <input type="file" id="file-input" style="display: none" accept=".pdf" onchange="handleFiles(event)">
             </div>
             <div class="progress-bar">
                 <div class="fill" id="progress-bar-fill" style="width: 0%"></div>
+=======
+            <div class="upload-zone" id="upload-zone">
+                <p>Drop PDF files here or click to upload</p>
+                <input type="file" id="file-input" style="display: none" accept=".pdf">
+            </div>
+            <div class="progress-bar">
+                <div class="fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+            <div class="processing-status" style="display: none;">
+                <div class="spinner"></div>
+                <span>Processing with multiple LLMs...</span>
+                <div class="stage-indicator">Stage: <span id="current-stage">Initializing</span></div>
+>>>>>>> main
             </div>
             <div class="metrics">
                 <div class="metric">
@@ -126,6 +163,9 @@
                     <div class="value" id="queue-count">0</div>
                     <div class="label">In Queue</div>
                 </div>
+            </div>
+            <div class="action-buttons" id="result-actions" style="display: none; margin-top: 15px;">
+                <button class="primary" onclick="viewResults()">View Analysis Results</button>
             </div>
         </div>
 
@@ -194,6 +234,7 @@
     </div>
 
     <script>
+<<<<<<< HEAD
         // File Upload Handling
         function triggerUpload() {
             document.getElementById('file-input').click();
@@ -221,6 +262,85 @@
             if (files.length > 0) {
                 processFile(files[0]);
             }
+=======
+        // System Control
+        function stopSystem() {
+            fetch('/api/system/stop')
+                .then(response => response.json())
+                .then(data => updateStatus(data));
+        }
+
+        function startSystem() {
+            fetch('/api/system/start')
+                .then(response => response.json())
+                .then(data => updateStatus(data));
+        }
+
+        // File Upload and Processing
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const progressFill = document.getElementById('progress-fill');
+        const processingStatus = document.querySelector('.processing-status');
+        const currentStage = document.getElementById('current-stage');
+        const resultActions = document.getElementById('result-actions');
+        const processedCount = document.getElementById('processed-count');
+        const queueCount = document.getElementById('queue-count');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = '';
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) processFile(files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) processFile(e.target.files[0]);
+        });
+
+        async function processFile(file) {
+            if (!file.type.includes('pdf')) {
+                alert('Please upload a PDF file');
+                return;
+            }
+
+            processingStatus.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            // Simulate processing stages
+            const stages = [
+                'Extracting Text',
+                'Processing with GPT-4',
+                'Processing with Claude',
+                'Generating Consensus',
+                'Preparing Results'
+            ];
+
+            for (let i = 0; i < stages.length; i++) {
+                currentStage.textContent = stages[i];
+                progressFill.style.width = `${(i + 1) * (100 / stages.length)}%`;
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            // Update metrics
+            processedCount.textContent = parseInt(processedCount.textContent) + 1;
+            if (parseInt(queueCount.textContent) > 0) {
+                queueCount.textContent = parseInt(queueCount.textContent) - 1;
+            }
+
+            processingStatus.style.display = 'none';
+            resultActions.style.display = 'block';
+        }
+
+        function viewResults() {
+            // Load the LLM comparison view
+            window.location.href = '/Web/components/llm-comparison.html';
+>>>>>>> main
         }
 
         async function processFile(file) {
