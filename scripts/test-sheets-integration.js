@@ -1,79 +1,169 @@
-import googleSheets from '../src/services/google-sheets.js';
+import { google } from 'googleapis';
+import fs from 'fs';
 import { getLogger } from '../src/utils/logging.js';
 
 const logger = getLogger();
 
-// Test document data
-const testDocument = {
-    id: 'test-doc-001',
-    fileName: 'test-document.pdf',
-    type: 'PDF',
-    pages: 10,
-    wordCount: 5000
-};
+// Load credentials from token file
+const tokenData = JSON.parse(fs.readFileSync('google-token.json'));
 
-// Test category
-const testCategory = {
-    name: 'Legal Documents',
-    documentCount: 1,
-    description: 'Legal and contractual documents'
-};
+// Create OAuth2 client
+const oauth2Client = new google.auth.OAuth2();
+oauth2Client.setCredentials(tokenData);
 
-// Test status update
-const testStatus = {
-    status: 'Processing',
-    stage: 'PDF Extraction',
-    estimatedCompletion: new Date(Date.now() + 30000).toISOString(),
-    message: 'Extracting text from PDF'
-};
+// Initialize sheets API
+const sheets = google.sheets({ version: 'v4', auth: oauth2Client });
 
 async function testGoogleSheetsIntegration() {
     try {
         logger.info('Starting Google Sheets integration test');
 
-        // Load credentials from environment
-        const credentials = {
-            client_email: process.env.GOOGLE_CLIENT_EMAIL,
-            private_key: process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-            project_id: process.env.GOOGLE_PROJECT_ID
-        };
-
-        const spreadsheetId = process.env.GOOGLE_SHEET_ID;
-        if (!spreadsheetId) {
-            throw new Error('GOOGLE_SHEET_ID environment variable not set');
-        }
-
-        // Initialize service
-        logger.info('Initializing Google Sheets service');
-        await googleSheets.initialize(credentials, spreadsheetId);
-
-        // Create sheet structure
-        logger.info('Creating tracking sheet structure');
-        await googleSheets.createTrackingSheet();
-
-        // Add test document
-        logger.info('Adding test document');
-        await googleSheets.addDocument(testDocument);
-
-        // Update document status
-        logger.info('Updating document status');
-        await googleSheets.updateStatus(testDocument.id, testStatus);
-
-        // Add test category
-        logger.info('Adding test category');
-        await googleSheets.updateCategory(testCategory);
-
-        // Update document metadata
-        logger.info('Updating document metadata');
-        await googleSheets.updateMetadata(testDocument.id, {
-            pages: testDocument.pages,
-            wordCount: testDocument.wordCount,
-            processingTime: '2.5s'
+        // Create new spreadsheet
+        logger.info('Creating new spreadsheet');
+        const createResponse = await sheets.spreadsheets.create({
+            requestBody: {
+                properties: {
+                    title: 'EvidenceAI Document Tracking'
+                }
+            }
         });
 
-        logger.info('Google Sheets integration test completed successfully');
+        const spreadsheetId = createResponse.data.spreadsheetId;
+        logger.info('Created spreadsheet:', spreadsheetId);
+
+        // Create sheets for different views
+        await sheets.spreadsheets.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+                requests: [
+                    // Main tracking sheet
+                    {
+                        addSheet: {
+                            properties: {
+                                title: 'Document Tracking',
+                                gridProperties: {
+                                    frozenRowCount: 1,
+                                    frozenColumnCount: 1
+                                }
+                            }
+                        }
+                    },
+                    // Processing status sheet
+                    {
+                        addSheet: {
+                            properties: {
+                                title: 'Processing Status',
+                                gridProperties: {
+                                    frozenRowCount: 1
+                                }
+                            }
+                        }
+                    }
+                ]
+            }
+        });
+
+        // Set up headers
+        await sheets.spreadsheets.values.batchUpdate({
+            spreadsheetId,
+            requestBody: {
+                valueInputOption: 'RAW',
+                data: [
+                    {
+                        range: 'Document Tracking!A1:J1',
+                        values: [[
+                            'Document ID',
+                            'File Name',
+                            'Type',
+                            'Upload Date',
+                            'Status',
+                            'Pages',
+                            'Word Count',
+                            'Processing Time',
+                            'Output Location',
+                            'Notes'
+                        ]]
+                    },
+                    {
+                        range: 'Processing Status!A1:E1',
+                        values: [[
+                            'Document ID',
+                            'Current Stage',
+                            'Start Time',
+                            'Estimated Completion',
+                            'Status Message'
+                        ]]
+                    }
+                ]
+            }
+        });
+
+        // Add test document
+        const testDoc = {
+            id: 'TEST-001',
+            fileName: 'OFW_Messages_Report_Dec.pdf',
+            type: 'PDF',
+            uploadDate: new Date().toISOString(),
+            status: 'Processing',
+            pages: 150,
+            wordCount: 124019,
+            processingTime: '1.079s',
+            outputLocation: 'ai-outputs/deepseek/ofw-processing-2025-01-11T00-16-27-040Z',
+            notes: 'Test document'
+        };
+
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Document Tracking!A:J',
+            valueInputOption: 'RAW',
+            requestBody: {
+                values: [[
+                    testDoc.id,
+                    testDoc.fileName,
+                    testDoc.type,
+                    testDoc.uploadDate,
+                    testDoc.status,
+                    testDoc.pages,
+                    testDoc.wordCount,
+                    testDoc.processingTime,
+                    testDoc.outputLocation,
+                    testDoc.notes
+                ]]
+            }
+        });
+
+        // Add processing status
+        await sheets.spreadsheets.values.append({
+            spreadsheetId,
+            range: 'Processing Status!A:E',
+            valueInputOption: 'RAW',
+            requestBody: {
+                values: [[
+                    testDoc.id,
+                    'PDF Processing',
+                    new Date().toISOString(),
+                    new Date(Date.now() + 60000).toISOString(),
+                    'Processing PDF content'
+                ]]
+            }
+        });
+
+        logger.info('Test completed successfully');
+        logger.info('Spreadsheet URL:', `https://docs.google.com/spreadsheets/d/${spreadsheetId}`);
+        
+        // Save spreadsheet ID for future use
+        fs.writeFileSync('.env', `
+# Google OAuth Configuration
+GOOGLE_CLIENT_ID=${process.env.GOOGLE_CLIENT_ID}
+GOOGLE_CLIENT_SECRET=${process.env.GOOGLE_CLIENT_SECRET}
+
+# Google Sheets Configuration
+GOOGLE_SHEET_ID=${spreadsheetId}
+`);
+        
+        logger.info('Updated .env with spreadsheet ID');
     } catch (error) {
-        logger.error('Google Sheets integration test failed:', error);
+        logger.error('Test failed:', error);
         throw error;
     }
 }
