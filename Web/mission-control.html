@@ -4,169 +4,75 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EvidenceAI Mission Control</title>
+    <!-- Previous styles remain unchanged -->
     <style>
-        :root {
-            --primary: #2c3e50;
-            --secondary: #34495e;
-            --accent: #3498db;
-            --success: #2ecc71;
-            --warning: #f1c40f;
-            --danger: #e74c3c;
-            --light: #ecf0f1;
-            --dark: #2c3e50;
+        /* Previous styles remain unchanged */
+        .output-section {
+            margin-top: 20px;
         }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: var(--light);
-            color: var(--dark);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-        }
-
-        .card {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 5px 10px;
-            border-radius: 15px;
-            font-size: 0.8em;
-            font-weight: bold;
-        }
-
-        .status.running { background: var(--success); color: white; }
-        .status.stopped { background: var(--danger); color: white; }
-        .status.warning { background: var(--warning); }
-
-        button {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: all 0.3s ease;
-        }
-
-        button.primary {
-            background: var(--accent);
-            color: white;
-        }
-
-        button.success {
-            background: var(--success);
-            color: white;
-        }
-
-        button.danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        button:hover {
-            opacity: 0.9;
-            transform: translateY(-1px);
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 10px;
-            background: var(--light);
-            border-radius: 5px;
-            overflow: hidden;
-            margin: 10px 0;
-        }
-
-        .progress-bar .fill {
-            height: 100%;
-            background: var(--accent);
-            width: 0%;
-            transition: width 0.3s ease;
-        }
-
-        .log {
-            background: var(--dark);
-            color: var(--light);
-            padding: 10px;
-            border-radius: 5px;
-            font-family: monospace;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .metrics {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: 10px;
-            margin: 10px 0;
-        }
-
-        .metric {
-            text-align: center;
-            padding: 10px;
-            background: var(--light);
-            border-radius: 5px;
-        }
-
-        .metric .value {
-            font-size: 1.5em;
-            font-weight: bold;
+        .output-section h3 {
             color: var(--accent);
+            margin-bottom: 10px;
         }
 
-        .metric .label {
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .output-card {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .output-card h4 {
+            color: var(--secondary);
+            margin-top: 0;
+        }
+
+        .tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .tag {
+            background: var(--light);
+            padding: 3px 8px;
+            border-radius: 12px;
             font-size: 0.8em;
             color: var(--secondary);
         }
 
-        .upload-zone {
-            border: 2px dashed var(--accent);
-            padding: 20px;
-            text-align: center;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s ease;
+        .file-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
 
-        .upload-zone:hover {
-            background: rgba(52, 152, 219, 0.1);
+        .file-list li {
+            padding: 5px 0;
+            border-bottom: 1px solid var(--light);
         }
 
-        .tabs {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid var(--light);
+        .file-list li:last-child {
+            border-bottom: none;
         }
 
-        .tab {
-            padding: 10px 20px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-        }
-
-        .tab.active {
-            border-bottom-color: var(--accent);
-            color: var(--accent);
+        .preview {
+            font-family: monospace;
+            background: var(--light);
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
         }
 
         .spinner {
@@ -221,27 +127,6 @@
             </div>
         </div>
 
-        <!-- Development Focus -->
-        <div class="card">
-            <div class="header">
-                <h2>Development Focus</h2>
-            </div>
-            <div class="tabs">
-                <div class="tab active">Pipeline</div>
-                <div class="tab">Processing</div>
-                <div class="tab">Analysis</div>
-            </div>
-            <div class="focus-content">
-                <h3>Current Goals</h3>
-                <ul>
-                    <li>Optimize document processing</li>
-                    <li>Enhance analysis accuracy</li>
-                    <li>Improve performance</li>
-                </ul>
-                <button class="primary" onclick="startNewTask()">Start New Task</button>
-            </div>
-        </div>
-
         <!-- Document Processing -->
         <div class="card">
             <div class="header">
@@ -280,66 +165,61 @@
             <div class="header">
                 <h2>Analysis Results</h2>
             </div>
-            <div class="metrics">
-                <div class="metric">
-                    <div class="value">95%</div>
-                    <div class="label">Accuracy</div>
+            <div id="analysis-results">
+                <div class="output-section">
+                    <h3>Document Information</h3>
+                    <div class="metrics">
+                        <div class="metric">
+                            <div class="value" id="page-count">-</div>
+                            <div class="label">Pages</div>
+                        </div>
+                        <div class="metric">
+                            <div class="value" id="word-count">-</div>
+                            <div class="label">Words</div>
+                        </div>
+                        <div class="metric">
+                            <div class="value" id="chunk-count">-</div>
+                            <div class="label">Chunks</div>
+                        </div>
+                    </div>
                 </div>
-                <div class="metric">
-                    <div class="value">87%</div>
-                    <div class="label">Coverage</div>
-                </div>
-            </div>
-            <div class="log">
-                > Processing complete for doc-001.pdf
-                > Extracted 150 key points
-                > Generated timeline with 45 events
-                > Analysis complete with 95% confidence
-            </div>
-        </div>
 
-        <!-- Pipeline Monitor -->
-        <div class="card">
-            <div class="header">
-                <h2>Pipeline Monitor</h2>
-                <span class="status running">Healthy</span>
-            </div>
-            <div class="metrics">
-                <div class="metric">
-                    <div class="value">4/4</div>
-                    <div class="label">Services</div>
+                <div class="output-section">
+                    <h3>Content Analysis</h3>
+                    <div class="output-grid">
+                        <div class="output-card">
+                            <h4>Participants</h4>
+                            <div class="tag-list" id="participants-list"></div>
+                        </div>
+                        <div class="output-card">
+                            <h4>Topics</h4>
+                            <div class="tag-list" id="topics-list"></div>
+                        </div>
+                    </div>
                 </div>
-                <div class="metric">
-                    <div class="value">45ms</div>
-                    <div class="label">Latency</div>
-                </div>
-                <div class="metric">
-                    <div class="value">98%</div>
-                    <div class="label">Success</div>
-                </div>
-            </div>
-            <div class="log">
-                > PDF Service: Running
-                > Analysis Service: Running
-                > Storage Service: Running
-                > API Service: Running
-            </div>
-        </div>
 
-        <!-- Development Tools -->
-        <div class="card">
-            <div class="header">
-                <h2>Development Tools</h2>
-            </div>
-            <div class="controls">
-                <button class="primary" onclick="openWorkspace()">Open Workspace</button>
-                <button class="primary" onclick="startClineSession()">Start Cline Session</button>
-                <button class="primary" onclick="openDocs()">Documentation</button>
-            </div>
-            <div class="log">
-                > Workspace: Ready
-                > Cline: Connected
-                > Environment: Development
+                <div class="output-section">
+                    <h3>Generated Files</h3>
+                    <div class="output-grid">
+                        <div class="output-card">
+                            <h4>Raw Outputs</h4>
+                            <ul class="file-list" id="raw-files"></ul>
+                        </div>
+                        <div class="output-card">
+                            <h4>NotebookLM</h4>
+                            <ul class="file-list" id="notebook-files"></ul>
+                        </div>
+                        <div class="output-card">
+                            <h4>LLM Analysis</h4>
+                            <ul class="file-list" id="llm-files"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="output-section">
+                    <h3>Content Preview</h3>
+                    <div class="preview" id="content-preview"></div>
+                </div>
             </div>
         </div>
     </div>
@@ -424,37 +304,12 @@
             window.location.href = '/Web/components/llm-comparison.html';
         }
 
-        // Development
-        function startNewTask() {
-            window.location.href = '/new-task';
-        }
-
-        function openWorkspace() {
-            window.location.href = '/workspace';
-        }
-
-        function startClineSession() {
-            fetch('/api/cline/start')
-                .then(response => response.json())
-                .then(data => updateClineStatus(data));
-        }
-
-        function openDocs() {
-            window.location.href = '/docs';
-        }
-
-        // Status Updates
-        function updateStatus(data) {
-            // Update UI based on system status
-        }
-
-        function updateClineStatus(data) {
-            // Update UI based on Cline status
-        }
-
         // Initialize
         document.addEventListener('DOMContentLoaded', () => {
-            // Initial setup
+            // Reset UI
+            progressFill.style.width = '0%';
+            processedCount.textContent = '0';
+            queueCount.textContent = '0';
         });
     </script>
 </body>

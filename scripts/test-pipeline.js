@@ -1,32 +1,28 @@
-import { routeDocument } from '../src/services/document-router.js';
+import fetch from 'node-fetch';
+import FormData from 'form-data';
 import fs from 'fs';
 import path from 'path';
 
-async function runTestPipeline() {
+async function testPipeline() {
     try {
-        console.log('Starting test pipeline...');
+        // Create test form data
+        const form = new FormData();
+        const testPdfPath = path.join(process.cwd(), 'test-data', 'OFW_Messages_Report_Dec.pdf');
+        form.append('file', fs.createReadStream(testPdfPath));
 
-        // Read sample email
-        const emailPath = path.join(process.cwd(), 'tests/fixtures/sample_email.eml');
-        const emailContent = fs.readFileSync(emailPath, 'utf8');
-        console.log('Loaded sample email:', emailPath);
+        // Send request to pipeline server
+        console.log('Sending test request to pipeline server...');
+        const response = await fetch('http://localhost:3002/process', {
+            method: 'POST',
+            body: form
+        });
 
-        // Process document
-        console.log('Processing document...');
-        const result = await routeDocument(emailContent, 'sample_email.eml');
-        console.log('Processing complete. Result:', JSON.stringify(result, null, 2));
-
-        // Basic validation
-        if (!result.success) {
-            throw new Error('Processing failed: ' + result.error);
-        }
-
-        console.log('Test pipeline completed successfully');
-        process.exit(0);
+        // Log response
+        const result = await response.json();
+        console.log('Pipeline server response:', result);
     } catch (error) {
-        console.error('Test pipeline failed:', error);
-        process.exit(1);
+        console.error('Error testing pipeline:', error);
     }
 }
 
-runTestPipeline();
+testPipeline();

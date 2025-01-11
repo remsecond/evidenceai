@@ -31,42 +31,35 @@ const modelProcessors = {
   base: pdfProcessor,
 };
 
-// Get model from command line or default to deepseek
-const model = process.argv[3] || "deepseek";
-if (!modelProcessors[model]) {
-  console.error(`Unknown model: ${model}. Using base processor.`);
-}
-
-// Create output directories optimized for different model focuses
-const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-const baseDir = path.join(
-  process.cwd(),
-  "ai-outputs",
-  model,
-  `ofw-processing-${timestamp}`
-);
-
-// Create directories for each model focus
-const notebookDir = path.join(baseDir, "notebook");
-const llmDir = path.join(baseDir, "llm");
-const rawDir = path.join(baseDir, "raw");
-
-[baseDir, notebookDir, llmDir, rawDir].forEach((dir) => {
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
-});
-
-// Select processor
-const processor = modelProcessors[model] || modelProcessors.base;
-
 // Process OFW file using proper chunking
-async function processOFWNow() {
+export async function processOFWNow(pdfPath, model = "deepseek") {
   try {
-    // Get PDF path from command line argument or use default
-    const pdfPath =
-      process.argv[2] ||
-      path.join(process.cwd(), "test-data", "OFW_Messages_Report_Dec.pdf");
+    // Create output directories optimized for different model focuses
+    const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+    const baseDir = path.join(
+      process.cwd(),
+      "ai-outputs",
+      model,
+      `ofw-processing-${timestamp}`
+    );
+
+    // Create directories for each model focus
+    const notebookDir = path.join(baseDir, "notebook");
+    const llmDir = path.join(baseDir, "llm");
+    const rawDir = path.join(baseDir, "raw");
+
+    [baseDir, notebookDir, llmDir, rawDir].forEach((dir) => {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+    });
+
+    // Select processor
+    const processor = modelProcessors[model] || modelProcessors.base;
+    if (!modelProcessors[model]) {
+      console.error(`Unknown model: ${model}. Using base processor.`);
+    }
+
     console.log("Processing PDF with enhanced chunking...");
     const result = await processor.processPdf(pdfPath);
 
@@ -220,17 +213,19 @@ async function processOFWNow() {
   }
 }
 
-// Run it
-console.log("Starting OFW processing...");
-processOFWNow()
-  .then((finalReport) => {
-    console.log("Success! Report:", JSON.stringify(finalReport, null, 2));
-    fs.writeFileSync(
-      path.join(baseDir, "success.log"),
-      JSON.stringify(finalReport, null, 2)
-    );
-  })
-  .catch((error) => {
-    console.error("Failed:", error);
-    process.exit(1);
-  });
+// Run it if called directly
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  console.log("Starting OFW processing...");
+  processOFWNow(process.argv[2])
+    .then((finalReport) => {
+      console.log("Success! Report:", JSON.stringify(finalReport, null, 2));
+      fs.writeFileSync(
+        path.join(baseDir, "success.log"),
+        JSON.stringify(finalReport, null, 2)
+      );
+    })
+    .catch((error) => {
+      console.error("Failed:", error);
+      process.exit(1);
+    });
+}
