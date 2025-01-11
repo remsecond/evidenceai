@@ -1,44 +1,30 @@
 # Dependencies
 node_modules/
-venv/
-__pycache__/
+package-lock.json
 
-# Build outputs
-dist/
-build/
-*.pyc
-
-# Environment
-.env
-.env.local
-.env.*.local
-
-# IDE
-.vscode/
-.vscode-user/
-.idea/
-*.swp
-*.swo
-
-# Logs
+# Output directories
+ai-outputs/
+processed/
+demos/
 logs/
-*.log
-npm-debug.log*
-
-# Testing
 coverage/
-.nyc_output/
 
-# Operating System
-.DS_Store
-Thumbs.db
+# Environment files
+.env*
+!.env.example
 
-# Project specific
-test-data/processed/
-sessions/
-output/
+# IDE files
+.vscode/
+*.code-workspace
+
+# Test data
+test-data/
+test-files/
 
 # Temporary files
+*.log
 *.tmp
-*.temp
-temp/
+
+# Google authentication
+/config/google-auth-config.js
+google-token.json

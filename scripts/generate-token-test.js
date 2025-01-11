@@ -1,74 +1,100 @@
-import fs from 'fs/promises';
+import fs from 'fs';
 import path from 'path';
 
+// Create a test file that will hit our target token sizes
 async function generateTokenTest() {
-    try {
-        // Calculate needed characters for 245,988 tokens
-        const headerText = `From: test@example.com
+    // Target around 245,988 tokens (≈ 983,952 characters)
+    const targetChars = 983952;
+    
+    // Base content
+    const header = `=== Test Document ===
+From: test@example.com
 To: recipient@example.com
-Subject: Token Limit Test (245,988 tokens)
-Date: Thu, 14 Dec 2023 10:00:00 -0800
+Subject: Token Limit Test Document
+Date: 2024-01-20T10:00:00Z
 
-=== Test Document ===
+SECTION 1: Introduction
+======================
+This is a test document designed to verify the chunking implementation.
+The document contains multiple sections with varied content to test
+section preservation and boundary handling.
 
 `;
 
-        const footerText = `
+    const section2Start = `
+SECTION 2: Large Content Block
+=============================
+`;
 
+    const section3Start = `
+SECTION 3: Important Headers
+===========================
+SUBSECTION A: Critical Information
+--------------------------------
+This section tests preservation of headers and subheaders across chunk boundaries.
+`;
+
+    const section3B = `
+SUBSECTION B: Additional Details
+------------------------------
+Testing nested section handling and metadata preservation.
+`;
+
+    const section4 = `
+SECTION 4: Special Cases
+=======================
+NOTES:
+- Important point that should be preserved
+- Another critical point for testing
+- Verification of list handling
+`;
+
+    const footer = `
 === End of Test Document ===`;
 
-        const headerFooterChars = headerText.length + footerText.length;
-        const neededTokens = 245988;
-        const neededChars = (neededTokens * 4) - headerFooterChars;
-        
-        // Generate content
-        const content = headerText + 'A'.repeat(neededChars) + footerText;
+    // Calculate how many repeats we need
+    const baseLength = header.length + section2Start.length + section3Start.length + 
+                      section3B.length + section4.length + footer.length;
+    const remainingChars = targetChars - baseLength;
+    
+    // Split remaining chars between sections
+    const section2Text = 'This is a large block of repeating text that should force chunking. '.repeat(
+        Math.floor(remainingChars * 0.4 / 'This is a large block of repeating text that should force chunking. '.length)
+    );
+    
+    const section3AText = 'More content to ensure this crosses chunk boundaries. '.repeat(
+        Math.floor(remainingChars * 0.3 / 'More content to ensure this crosses chunk boundaries. '.length)
+    );
+    
+    const section3BText = 'Additional content to force more chunk boundaries. '.repeat(
+        Math.floor(remainingChars * 0.2 / 'Additional content to force more chunk boundaries. '.length)
+    );
+    
+    const section4Text = 'Content to push this section across chunks. '.repeat(
+        Math.floor(remainingChars * 0.1 / 'Content to push this section across chunks. '.length)
+    );
 
-        // Save to file
-        const filePath = path.join('tests', 'fixtures', 'edge_cases', 'token_limit_test.txt');
-        await fs.writeFile(filePath, content, 'utf8');
+    // Combine all content
+    const content = header +
+        section2Start + section2Text +
+        section3Start + section3AText +
+        section3B + section3BText +
+        section4 + section4Text +
+        footer;
 
-        // Verify size
-        const stats = await fs.stat(filePath);
-        const finalContent = await fs.readFile(filePath, 'utf8');
-        const estimatedTokens = Math.ceil(finalContent.length / 4);
+    // Ensure directory exists
+    const dir = path.join('tests', 'fixtures', 'edge_cases');
+    await fs.promises.mkdir(dir, { recursive: true });
 
-        console.log(`Generated test file: ${filePath}`);
-        console.log(`Size: ${(stats.size / 1024 / 1024).toFixed(2)}MB`);
-        console.log(`Characters: ${finalContent.length.toLocaleString()}`);
-        console.log(`Estimated Tokens: ${estimatedTokens.toLocaleString()}`);
+    // Write file
+    const filePath = path.join(dir, 'token_limit_test.txt');
+    await fs.promises.writeFile(filePath, content, 'utf8');
 
-        if (estimatedTokens !== neededTokens) {
-            console.warn(`Warning: Token count mismatch!`);
-            console.warn(`Expected: ${neededTokens.toLocaleString()}`);
-            console.warn(`Actual: ${estimatedTokens.toLocaleString()}`);
-            console.warn(`Difference: ${Math.abs(neededTokens - estimatedTokens).toLocaleString()}`);
-        }
-
-        // Save metadata
-        const metadata = {
-            timestamp: new Date().toISOString(),
-            file: {
-                name: path.basename(filePath),
-                size: stats.size,
-                characters: finalContent.length,
-                estimated_tokens: estimatedTokens,
-                target_tokens: neededTokens
-            }
-        };
-
-        const metadataPath = path.join(
-            path.dirname(filePath),
-            `${path.basename(filePath, '.txt')}_meta.json`
-        );
-        await fs.writeFile(metadataPath, JSON.stringify(metadata, null, 2));
-
-        console.log(`\nMetadata saved to: ${metadataPath}`);
-
-    } catch (error) {
-        console.error('Error generating test file:', error);
-        process.exit(1);
-    }
+    // Log stats
+    console.log('Test file generated:');
+    console.log('Total characters:', content.length);
+    console.log('Estimated tokens:', Math.ceil(content.length / 4));
+    console.log('File saved to:', filePath);
 }
 
-generateTokenTest();
+generateTokenTest().catch(console.error);

@@ -1,0 +1,144 @@
+{
+  "document_analysis": {
+    "primary_intent": {
+      "type": "schedule_modification",
+      "urgency": "high",
+      "impact": "immediate",
+      "stakeholders": ["John Smith", "Jane Doe", "Tommy"],
+      "confidence": 0.95
+    },
+    "communication_context": {
+      "type": "co_parenting",
+      "formality": "professional",
+      "tone": "cooperative",
+      "relationship_dynamics": {
+        "communication_style": "structured",
+        "coordination_level": "high",
+        "mutual_consideration": "evident",
+        "confidence": 0.9
+      }
+    },
+    "critical_events": [
+      {
+        "type": "medical_appointment",
+        "priority": "high",
+        "date": "Tuesday, January 23rd",
+        "time": "2:00 PM",
+        "location": "Children's Medical Center",
+        "participants": ["Tommy", "both parents", "Dr. Williams"],
+        "dependencies": [
+          {
+            "type": "schedule_change",
+            "from": "3:00 PM",
+            "to": "1:00 PM",
+            "reason": "travel_time"
+          }
+        ],
+        "confidence": 0.95
+      },
+      {
+        "type": "parent_teacher_conference",
+        "priority": "medium",
+        "date": "Thursday, January 25th",
+        "time": "4:30 PM",
+        "participants": ["both parents", "Ms. Johnson"],
+        "topic": "academic_progress",
+        "confidence": 0.9
+      }
+    ],
+    "action_items": [
+      {
+        "type": "schedule_confirmation",
+        "priority": "high",
+        "deadline": "before January 23rd",
+        "assignee": "Jane Doe",
+        "confidence": 0.95
+      },
+      {
+        "type": "item_return",
+        "item": "math textbook",
+        "priority": "medium",
+        "deadline": "before Wednesday",
+        "assignee": "Jane Doe",
+        "confidence": 0.9
+      }
+    ]
+  },
+  "behavioral_analysis": {
+    "communication_patterns": {
+      "structure": "organized",
+      "clarity": "high",
+      "consideration": "thoughtful",
+      "flexibility": "present",
+      "confidence": 0.9
+    },
+    "parenting_dynamics": {
+      "coordination_level": "active",
+      "mutual_involvement": "high",
+      "child_centered": true,
+      "areas_of_focus": [
+        "medical_care",
+        "education",
+        "daily_logistics"
+      ],
+      "confidence": 0.85
+    }
+  },
+  "risk_assessment": {
+    "potential_conflicts": [
+      {
+        "type": "schedule_conflict",
+        "severity": "moderate",
+        "mitigation": "alternative_time_offered",
+        "confidence": 0.8
+      }
+    ],
+    "compliance_factors": {
+      "custody_agreement": "referenced_indirectly",
+      "documentation_quality": "high",
+      "communication_record": "maintained",
+      "confidence": 0.85
+    }
+  },
+  "recommendations": {
+    "immediate_actions": [
+      {
+        "action": "confirm_schedule_change",
+        "priority": "high",
+        "timeline": "24-48 hours",
+        "confidence": 0.9
+      },
+      {
+        "action": "ensure_textbook_return",
+        "priority": "medium",
+        "timeline": "before Wednesday",
+        "confidence": 0.85
+      }
+    ],
+    "long_term_considerations": [
+      {
+        "type": "medical_coordination",
+        "suggestion": "establish_protocol_for_medical_appointments",
+        "importance": "high",
+        "confidence": 0.8
+      },
+      {
+        "type": "academic_coordination",
+        "suggestion": "create_shared_calendar_for_school_events",
+        "importance": "medium",
+        "confidence": 0.8
+      }
+    ]
+  },
+  "metadata": {
+    "analysis_version": "1.0",
+    "processing_time": 312,
+    "confidence_scores": {
+      "document_analysis": 0.92,
+      "behavioral_analysis": 0.88,
+      "risk_assessment": 0.85,
+      "recommendations": 0.85,
+      "overall": 0.88
+    }
+  }
+}

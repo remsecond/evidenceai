@@ -1,0 +1,99 @@
+{
+  "timestamp": "2025-01-08T02:12:38.729Z",
+  "generated_files": {
+    "small": [
+      "custody_exchange_small.json",
+      "exact_token_test.txt",
+      "exact_token_test_meta.json",
+      "large_test.txt",
+      "large_test_meta.json",
+      "README.md",
+      "README_meta.json",
+      "test_0.599mb.txt",
+      "test_0.599mb_meta.json",
+      "test_0.6mb.txt",
+      "test_0.6mb_meta.json",
+      "test_1.2mb.txt",
+      "test_1.2mb_meta.json",
+      "test_19.2mb.txt",
+      "test_19.2mb_meta.json",
+      "test_2.4mb.txt",
+      "test_2.4mb_meta.json",
+      "test_4.8mb.txt",
+      "test_4.8mb_meta.json",
+      "test_40mb.txt",
+      "test_40mb_meta.json",
+      "test_9.6mb.txt",
+      "test_9.6mb_meta.json",
+      "test_data_report.json",
+      "test_data_report_meta.json",
+      "token_limit_test.txt",
+      "token_limit_test_meta.json"
+    ],
+    "medium": [
+      "communication_medium.json"
+    ],
+    "large": [
+      "mixed_large.json"
+    ],
+    "ofw": [
+      "OFW_Messages_Report_Dec.pdf",
+      "OFW_Messages_Report_Dec_meta.json"
+    ],
+    "emails": [
+      "communication_medium.eml",
+      "custody_exchange_small.eml",
+      "mixed_large.eml",
+      "sample_email.eml",
+      "sample_email_meta.json"
+    ],
+    "edge_cases": [
+      "mixed_formats.json",
+      "token_limit_exact.json",
+      "token_limit_over.json",
+      "token_limit_test.txt"
+    ]
+  },
+  "token_counts": {
+    "custody_exchange_small.json": 6876,
+    "exact_token_test.txt": 57,
+    "exact_token_test_meta.json": 132,
+    "large_test.txt": 870,
+    "large_test_meta.json": 131,
+    "README.md": 137,
+    "README_meta.json": 129,
+    "test_0.599mb.txt": 1885,
+    "test_0.599mb_meta.json": 132,
+    "test_0.6mb.txt": 1888,
+    "test_0.6mb_meta.json": 131,
+    "test_1.2mb.txt": 3776,
+    "test_1.2mb_meta.json": 133,
+    "test_19.2mb.txt": 60399,
+    "test_19.2mb_meta.json": 134,
+    "test_2.4mb.txt": 7550,
+    "test_2.4mb_meta.json": 132,
+    "test_4.8mb.txt": 15100,
+    "test_4.8mb_meta.json": 133,
+    "test_40mb.txt": 125830,
+    "test_40mb_meta.json": 134,
+    "test_9.6mb.txt": 30200,
+    "test_9.6mb_meta.json": 134,
+    "test_data_report.json": 685,
+    "test_data_report_meta.json": 133,
+    "token_limit_test.txt": 58,
+    "token_limit_test_meta.json": 133,
+    "communication_medium.json": 22696,
+    "mixed_large.json": 104444,
+    "OFW_Messages_Report_Dec.pdf": 225826,
+    "OFW_Messages_Report_Dec_meta.json": 142,
+    "communication_medium.eml": 22738,
+    "custody_exchange_small.eml": 6920,
+    "mixed_large.eml": 104485,
+    "sample_email.eml": 369,
+    "sample_email_meta.json": 132,
+    "mixed_formats.json": 93,
+    "token_limit_exact.json": 200000,
+    "token_limit_over.json": 245988
+  },
+  "categories": {}
+}

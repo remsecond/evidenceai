@@ -1,6 +1,6 @@
+/** @type {import('jest').Config} */
 export default {
     transform: {},
-    extensionsToTreatAsEsm: ['.js'],
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1'
     },
@@ -18,4 +18,4 @@ export default {
     ],
     // Add test environment setup
     setupFilesAfterEnv: ['./tests/setup.js']
-};
+}

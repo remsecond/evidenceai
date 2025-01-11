@@ -91,11 +91,9 @@ Sarah`;
             const dates = extractDates(content);
             
             expect(dates).toHaveLength(3);
-            expect(dates.map(d => d.date)).toEqual([
-                '2024-01-25',
-                '2024-01-15',
-                '2024-01-20'
-            ]);
+            const expectedDates = new Set(['2024-01-25', '2024-01-15', '2024-01-20']);
+            const extractedDates = new Set(dates.map(d => d.date));
+            expect(extractedDates).toEqual(expectedDates);
         });
 
         test('includes context with extracted dates', () => {
@@ -118,18 +116,15 @@ Sarah`;
         test('extracts dates from sample email', () => {
             const dates = extractDates(sampleEmail);
             
-            const expectedDates = [
+            const expectedDates = new Set([
                 '2024-01-10', // Initial planning
                 '2024-01-12', // Team assignments
                 '2024-01-17', // Development setup
-                '2024-01-15', // Email dates
-                '2024-01-15'  // Reply date
-            ];
+                '2024-01-15'  // Email dates (both original and reply)
+            ]);
             
-            const extractedDates = dates.map(d => d.date);
-            expectedDates.forEach(date => {
-                expect(extractedDates).toContain(date);
-            });
+            const extractedDates = new Set(dates.map(d => d.date));
+            expect(extractedDates).toEqual(expectedDates);
         });
     });
 

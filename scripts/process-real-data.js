@@ -102,6 +102,8 @@ async function processDocumentWithChunking(doc) {
                 analyses.semantic = aiResult.semantic;
                 analyses.entities = aiResult.entities;
                 analyses.validation = aiResult.validation;
+                analyses.timeline = aiResult.timeline;
+                analyses.complex = aiResult.complex;
             }
             
             return {
@@ -254,7 +256,7 @@ function combineSemanticAnalyses(chunks) {
 function combineEntityAnalyses(chunks) {
     const entityResults = chunks.map(c => c.analyses.entities).filter(Boolean);
     if (entityResults.length === 0) return null;
-    
+
     return {
         entities: {
             people: Array.from(new Set(entityResults.flatMap(r => r.entities?.people || []))),
@@ -274,6 +276,64 @@ function combineEntityAnalyses(chunks) {
 }
 
 /**
+ * Combine timeline analyses from multiple chunks
+ */
+function combineTimelineAnalyses(chunks) {
+    const timelineResults = chunks.map(c => c.analyses.timeline).filter(Boolean);
+    if (timelineResults.length === 0) return null;
+
+    return {
+        events: timelineResults.flatMap(r => r.events || []).sort((a, b) => {
+            return new Date(a.timestamp) - new Date(b.timestamp);
+        }),
+        metadata: {
+            total_events: timelineResults.reduce((acc, r) => acc + (r.events?.length || 0), 0),
+            date_range: {
+                start: timelineResults.reduce((earliest, r) => {
+                    const dates = r.events?.map(e => new Date(e.timestamp)) || [];
+                    const min = dates.length ? Math.min(...dates) : earliest;
+                    return earliest ? Math.min(earliest, min) : min;
+                }, null),
+                end: timelineResults.reduce((latest, r) => {
+                    const dates = r.events?.map(e => new Date(e.timestamp)) || [];
+                    const max = dates.length ? Math.max(...dates) : latest;
+                    return latest ? Math.max(latest, max) : max;
+                }, null)
+            },
+            confidence: average(timelineResults.map(r => r.metadata?.confidence || 0))
+        }
+    };
+}
+
+/**
+ * Combine complex analyses from multiple chunks
+ */
+function combineComplexAnalyses(chunks) {
+    const complexResults = chunks.map(c => c.analyses.complex).filter(Boolean);
+    if (complexResults.length === 0) return null;
+
+    return {
+        patterns: Array.from(new Set(complexResults.flatMap(r => r.patterns || []))),
+        tone: {
+            overall: complexResults.reduce((acc, r) => {
+                if (!r.tone?.overall) return acc;
+                return {
+                    sentiment: r.tone.overall.sentiment,
+                    intensity: (acc?.intensity || 0) + r.tone.overall.intensity
+                };
+            }, null),
+            segments: complexResults.flatMap(r => r.tone?.segments || []).sort((a, b) => {
+                return new Date(a.timestamp) - new Date(b.timestamp);
+            })
+        },
+        metadata: {
+            confidence: average(complexResults.map(r => r.metadata?.confidence || 0)),
+            pattern_count: complexResults.reduce((acc, r) => acc + (r.patterns?.length || 0), 0)
+        }
+    };
+}
+
+/**
  * Calculate average of numbers
  */
 function average(numbers) {
@@ -282,39 +342,28 @@ function average(numbers) {
 }
 
 /**
- * Main processing function
+ * Main processing function - Simple sequential processing
  */
 export async function processRealDataset(documents) {
     try {
         logger.info('Starting real dataset processing');
         
-        // Split into batches
-        const batches = [];
-        for (let i = 0; i < documents.length; i += CONFIG.BATCH_SIZE) {
-            batches.push(documents.slice(i, i + CONFIG.BATCH_SIZE));
-        }
-        
-        // Process batches
         const results = [];
-        for (const batch of batches) {
-            // Check queue length
-            trackQueueLength('document_processing', processingQueue.length);
-            if (processingQueue.length > CONFIG.QUEUE_LIMIT) {
-                logger.warn('Queue limit reached, waiting...');
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
+        for (const doc of documents) {
+            logger.info(`Processing document ${results.length + 1}/${documents.length}`);
             
-            // Process batch
-            const batchResults = await processBatch(batch);
-            results.push(...batchResults);
+            // Simple two-pass processing
+            const result = await analyzeText(doc.content, {
+                focus: doc.type || 'general'
+            });
             
-            // Check memory usage
-            const memUsage = process.memoryUsage().heapUsed / process.memoryUsage().heapTotal;
-            if (memUsage > CONFIG.MEMORY_LIMIT) {
-                logger.warn('Memory limit reached, forcing garbage collection');
-                global.gc(); // Requires --expose-gc flag
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            }
+            results.push({
+                id: doc.id,
+                ...result
+            });
+            
+            // Basic progress tracking
+            trackProcessingTime('document_processing', Date.now() - result.metadata.processing_time);
         }
         
         logger.info('Dataset processing complete', {

@@ -69,41 +69,48 @@ export async function processDocument(content, filename = '') {
             }
         };
 
+        // Calculate confidence scores with fallbacks
+        const confidenceScores = {
+            document: documentAnalysis?.metadata?.confidence_scores || 0.5,
+            semantic: aiAnalysis?.semantic?.confidence || 0.7,
+            outliers: outlierAnalysis?.metadata?.confidence_scores?.overall || 0.5
+        };
+
+        // Calculate processing time
+        const startTime = documentAnalysis?.metadata?.processing_time || Date.now();
+        const processingTime = Date.now() - startTime;
+
         // Combine results with chunking metadata
         const result = {
             success: true,
-            format: documentAnalysis.format,
-            structure: documentAnalysis.structure,
+            format: documentAnalysis?.format || 'unknown',
+            structure: documentAnalysis?.structure || {},
             metadata: {
-                ...documentAnalysis.metadata,
-                confidence_scores: {
-                    document: documentAnalysis.metadata.confidence_scores,
-                    semantic: aiAnalysis.semantic.confidence || 0.7,
-                    outliers: outlierAnalysis.metadata.confidence_scores.overall
-                },
+                ...(documentAnalysis?.metadata || {}),
+                confidence_scores: confidenceScores,
                 chunking: chunkingMeta,
                 processing_stats: {
                     total_tokens_processed: sizeCheck.estimatedTokens,
                     chunks_processed: chunkingMeta.total_chunks,
                     avg_chunk_size: Math.ceil(sizeCheck.estimatedTokens / chunkingMeta.total_chunks),
-                    processing_time: Date.now() - documentAnalysis.metadata.processing_time,
+                    processing_time: processingTime,
                     efficiency: calculateEfficiency(sizeCheck, chunkingMeta)
                 },
                 validation: {
-                    encoding: validation.encoding.metrics,
+                    encoding: validation?.encoding?.metrics || {},
                     quality: {
-                        content_density: validation.quality?.contentDensity,
-                        unique_lines: validation.quality?.uniqueLines,
-                        format_compliance: validation.format?.valid
+                        content_density: validation?.quality?.contentDensity || 0,
+                        unique_lines: validation?.quality?.uniqueLines || 0,
+                        format_compliance: validation?.format?.valid || false
                     },
-                    security: validation.security.valid
+                    security: validation?.security?.valid || false
                 }
             },
             analysis: {
-                semantic: aiAnalysis.semantic,
-                entities: aiAnalysis.entities,
-                validation: aiAnalysis.validation,
-                outliers: outlierAnalysis.outliers
+                semantic: aiAnalysis?.semantic || {},
+                entities: aiAnalysis?.entities || [],
+                validation: aiAnalysis?.validation || {},
+                outliers: outlierAnalysis?.outliers || []
             }
         };
 
@@ -125,15 +132,25 @@ export async function processDocument(content, filename = '') {
  * Calculate processing efficiency
  */
 function calculateEfficiency(sizeCheck, chunkingMeta) {
-    const idealChunks = sizeCheck.estimatedChunks;
-    const actualChunks = chunkingMeta.total_chunks;
-    const chunkEfficiency = idealChunks / actualChunks;
+    try {
+        const idealChunks = sizeCheck?.estimatedChunks || 1;
+        const actualChunks = chunkingMeta?.total_chunks || 1;
+        const chunkEfficiency = Math.min(1, idealChunks / Math.max(1, actualChunks));
+        const parallelEfficiency = actualChunks > 1 ? 0.8 : 1.0; // Parallel processing overhead
 
-    return {
-        chunk_efficiency: chunkEfficiency,
-        parallel_efficiency: actualChunks > 1 ? 0.8 : 1.0, // Parallel processing overhead
-        overall_efficiency: chunkEfficiency * (actualChunks > 1 ? 0.8 : 1.0)
-    };
+        return {
+            chunk_efficiency: Number(chunkEfficiency.toFixed(2)),
+            parallel_efficiency: parallelEfficiency,
+            overall_efficiency: Number((chunkEfficiency * parallelEfficiency).toFixed(2))
+        };
+    } catch (error) {
+        logger.warn('Error calculating efficiency, using defaults:', error);
+        return {
+            chunk_efficiency: 1.0,
+            parallel_efficiency: 1.0,
+            overall_efficiency: 1.0
+        };
+    }
 }
 
 /**

@@ -1,0 +1,21 @@
+{
+  "original_name": "exact_token_test.txt",
+  "size_bytes": 225,
+  "characters": 225,
+  "estimated_tokens": 57,
+  "validation": {
+    "sizeBytes": 225,
+    "sizeMB": 0.00021457672119140625,
+    "category": "single_chunk",
+    "estimatedTokens": 57,
+    "estimatedChunks": 1,
+    "guidance": "File can be processed in a single chunk",
+    "canProcess": true,
+    "metrics": {
+      "tokensPerChunk": 57,
+      "estimatedProcessingTime": 5000
+    }
+  },
+  "processing_date": "2025-01-08T02:12:39.334Z",
+  "category": "small"
+}

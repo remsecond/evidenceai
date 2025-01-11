@@ -1,0 +1,63 @@
+{
+    "telemetry.machineId": "f11681177f689f72a4b733f3f532751df1eb99a95e153231e80d40c787b98597",
+    "telemetry.sqmId": "{B5225040-CBDB-4201-A5EE-93D3884C5EB2}",
+    "telemetry.devDeviceId": "965f27fe-12f6-46e0-8667-1fd9efaa12c5",
+    "backupWorkspaces": {
+        "workspaces": [],
+        "folders": [
+            {
+                "folderUri": "file:///c%3A/Users/robmo/Desktop/evidenceai"
+            }
+        ],
+        "emptyWindows": []
+    },
+    "windowControlHeight": 35,
+    "profileAssociations": {
+        "workspaces": {
+            "file:///c%3A/Users/robmo/Desktop/evidenceai": "__default__profile__"
+        },
+        "emptyWindows": {}
+    },
+    "theme": "hc-black",
+    "themeBackground": "#000000",
+    "windowSplash": {
+        "zoomLevel": 0,
+        "baseTheme": "hc-black",
+        "colorInfo": {
+            "foreground": "#ffffff",
+            "background": "#000000",
+            "editorBackground": "#000000",
+            "titleBarBackground": "#000000",
+            "titleBarBorder": "#6fc3df",
+            "activityBarBackground": "#000000",
+            "activityBarBorder": "#6fc3df",
+            "sideBarBackground": "#000000",
+            "sideBarBorder": "#6fc3df",
+            "statusBarBorder": "#6fc3df",
+            "windowBorder": "#6fc3df"
+        },
+        "layoutInfo": {
+            "sideBarSide": "left",
+            "editorPartMinWidth": 220,
+            "titleBarHeight": 35,
+            "activityBarWidth": 48,
+            "sideBarWidth": 669,
+            "statusBarHeight": 22,
+            "windowBorder": false
+        }
+    },
+    "windowsState": {
+        "lastActiveWindow": {
+            "folder": "file:///c%3A/Users/robmo/Desktop/evidenceai",
+            "backupPath": "C:\\Users\\robmo\\Desktop\\evidenceai\\.vscode-user\\Backups\\03ada215b20ab24eef789f50585c81df",
+            "uiState": {
+                "mode": 0,
+                "x": 320,
+                "y": 170,
+                "width": 1024,
+                "height": 772
+            }
+        },
+        "openedWindows": []
+    }
+}

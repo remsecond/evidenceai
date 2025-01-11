@@ -1,0 +1,21 @@
+{
+  "original_name": "OFW_Messages_Report_Dec.pdf",
+  "size_bytes": 943408,
+  "characters": 903303,
+  "estimated_tokens": 225826,
+  "validation": {
+    "sizeBytes": "test-data\\OFW_Messages_Report_Dec.pdf",
+    "sizeMB": null,
+    "category": "single_chunk",
+    "estimatedTokens": null,
+    "estimatedChunks": null,
+    "guidance": "File can be processed in a single chunk",
+    "canProcess": true,
+    "metrics": {
+      "tokensPerChunk": null,
+      "estimatedProcessingTime": null
+    }
+  },
+  "processing_date": "2025-01-08T00:48:36.216Z",
+  "category": "ofw"
+}

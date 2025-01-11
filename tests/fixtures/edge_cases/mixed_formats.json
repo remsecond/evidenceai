@@ -1,0 +1,20 @@
+From: mixed@example.com
+To: test@example.com
+Subject: Mixed Format Test
+Date: Wed, 08 Jan 2025 02:12:38 GMT
+
+=== Section 1: Plain Text ===
+Regular text content for testing.
+
+=== Section 2: JSON ===
+{
+  "key": "value"
+}
+
+=== Section 3: Base64 ===
+VGVzdCBjb250ZW50
+
+=== Section 4: Special Characters ===
+Unicode: 世界, 🌟, ñ, é
+HTML: <div>Test</div>
+URLs: https://example.com
