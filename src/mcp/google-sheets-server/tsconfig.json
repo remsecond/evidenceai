@@ -8,10 +8,15 @@
     "outDir": "build",
     "rootDir": ".",
     "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"],
+    "typeRoots": ["./node_modules/@types"],
+    "resolveJsonModule": true,
+    "allowJs": true
   },
   "include": [
-    "*.ts"
+    "*.ts",
+    "types/**/*.d.ts"
   ],
   "exclude": [
     "node_modules",
