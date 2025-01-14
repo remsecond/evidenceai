@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import BaseProcessor from '../base-processor.js';
-import pdfProcessor from '../pdf-processor.js';
+import BaseProcessor from '../../processors/base-processor.js';
+import pdfProcessor from '../../processors/pdf-processor.js';
 
 /**
  * Deepseek-specific processor that extends base processor
@@ -28,7 +28,11 @@ class DeepseekProcessor extends BaseProcessor {
      * Pre-process text before Deepseek-specific formatting
      */
     async preProcess(text) {
-        return {
+        if (!text || typeof text !== 'string') {
+            throw new Error('Invalid input: text must be a non-empty string');
+        }
+
+        const processed = {
             normalized: text,
             metadata: {
                 type: 'text',
@@ -48,6 +52,36 @@ class DeepseekProcessor extends BaseProcessor {
                 references: new Set()
             }
         };
+
+        // Validate processed result
+        if (!processed.metadata?.type || !processed.metadata?.format) {
+            throw new Error('Invalid processing result: missing required metadata');
+        }
+
+        return processed;
+    }
+
+    /**
+     * Validate model response before processing
+     */
+    validateModelResponse(response) {
+        if (!response || typeof response !== 'object') {
+            throw new Error('Invalid model response: response must be an object');
+        }
+
+        if (!response.content || typeof response.content !== 'string') {
+            throw new Error('Invalid model response: missing or invalid content');
+        }
+
+        if (!response.type || typeof response.type !== 'string') {
+            throw new Error('Invalid model response: missing or invalid type');
+        }
+
+        if (!response.metadata || typeof response.metadata !== 'object') {
+            throw new Error('Invalid model response: missing or invalid metadata');
+        }
+
+        return true;
     }
 
     /**

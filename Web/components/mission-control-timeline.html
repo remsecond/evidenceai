@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvidenceAI Mission Control - Timeline Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        .timeline-node {
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .timeline-node:hover {
+            filter: brightness(1.2);
+        }
+        .relationship-line {
+            stroke: #4a5568;
+            stroke-width: 2;
+            stroke-dasharray: 4;
+        }
+        .version-line {
+            stroke: #48bb78;
+            stroke-width: 2;
+        }
+        .attachment-line {
+            stroke: #4299e1;
+            stroke-width: 2;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="min-h-screen">
+        <!-- Header -->
+        <header class="bg-gray-800 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-3">
+                <div class="flex justify-between items-center">
+                    <h1 class="text-xl font-bold">EvidenceAI Mission Control</h1>
+                    <div class="space-x-4">
+                        <button id="refreshBtn" class="px-4 py-2 bg-blue-600 rounded hover:bg-blue-700">
+                            Refresh Data
+                        </button>
+                        <button id="exportBtn" class="px-4 py-2 bg-green-600 rounded hover:bg-green-700">
+                            Export Report
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="container mx-auto px-4 py-8">
+            <!-- Timeline Controls -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-semibold">Timeline Controls</h2>
+                    <div class="space-x-4">
+                        <select id="viewMode" class="px-3 py-2 border rounded" title="Visualization Mode" aria-label="Select visualization mode">
+                            <option value="timeline">Timeline View</option>
+                            <option value="graph">Relationship Graph</option>
+                            <option value="stats">Storage Stats</option>
+                        </select>
+                        <select id="filterType" class="px-3 py-2 border rounded" title="Document Type Filter" aria-label="Filter by document type">
+                            <option value="all">All Documents</option>
+                            <option value="email">Emails</option>
+                            <option value="document">Documents</option>
+                            <option value="spreadsheet">Spreadsheets</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="flex space-x-4">
+                    <div class="flex items-center">
+                        <label for="startDate" class="mr-2">Start Date:</label>
+                        <input type="date" id="startDate" class="px-3 py-2 border rounded" aria-label="Start date">
+                    </div>
+                    <div class="flex items-center">
+                        <label for="endDate" class="mr-2">End Date:</label>
+                        <input type="date" id="endDate" class="px-3 py-2 border rounded" aria-label="End date">
+                    </div>
+                    <button id="applyFilter" class="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700">
+                        Apply Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Visualization Area -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Timeline View -->
+                <div class="lg:col-span-2 bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-semibold mb-4">Document Timeline</h3>
+                    <div id="timelineView" class="h-96"></div>
+                </div>
+
+                <!-- Stats Panel -->
+                <div class="bg-white rounded-lg shadow-md p-4">
+                    <h3 class="text-lg font-semibold mb-4">Processing Stats</h3>
+                    <div id="statsPanel">
+                        <div class="mb-4">
+                            <h4 class="font-medium text-gray-700">Document Counts</h4>
+                            <div id="documentStats" class="mt-2"></div>
+                        </div>
+                        <div class="mb-4">
+                            <h4 class="font-medium text-gray-700">Storage Efficiency</h4>
+                            <div id="storageStats" class="mt-2"></div>
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-700">Processing Status</h4>
+                            <div id="processingStats" class="mt-2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail Panel -->
+            <div class="mt-8 bg-white rounded-lg shadow-md p-4">
+                <h3 class="text-lg font-semibold mb-4">Document Details</h3>
+                <div id="detailPanel" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">Content</h4>
+                        <pre id="contentView" class="bg-gray-100 p-4 rounded overflow-auto max-h-64"></pre>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-700 mb-2">Relationships</h4>
+                        <div id="relationshipView" class="bg-gray-100 p-4 rounded"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Timeline Data Management
+        let timelineData = null;
+        let currentView = 'timeline';
+
+        // Initialize Plotly Timeline
+        function initTimeline(data) {
+            const trace = {
+                x: data.map(d => d.temporal_info.event_date),
+                y: data.map(d => d.file_info.path),
+                mode: 'markers+text',
+                type: 'scatter',
+                marker: {
+                    size: 12,
+                    symbol: 'circle'
+                },
+                text: data.map(d => d.event_info.type),
+                textposition: 'right'
+            };
+
+            const layout = {
+                title: 'Document Timeline',
+                showlegend: false,
+                xaxis: {
+                    title: 'Date'
+                },
+                yaxis: {
+                    title: 'Document'
+                }
+            };
+
+            Plotly.newPlot('timelineView', [trace], layout);
+        }
+
+        // Initialize Stats Display
+        function updateStats(data) {
+            const stats = {
+                documents: data.length,
+                storage: data.reduce((acc, d) => acc + (d.file_info.size_bytes || 0), 0),
+                relationships: data.reduce((acc, d) => 
+                    acc + d.relationships.attachments.length + 
+                    d.relationships.related_documents.length, 0)
+            };
+
+            document.getElementById('documentStats').innerHTML = `
+                <div class="grid grid-cols-2 gap-2">
+                    <div>Total Documents:</div>
+                    <div>${stats.documents}</div>
+                    <div>Total Storage:</div>
+                    <div>${(stats.storage / 1024).toFixed(2)} KB</div>
+                    <div>Relationships:</div>
+                    <div>${stats.relationships}</div>
+                </div>
+            `;
+        }
+
+        // Event Handlers
+        document.getElementById('viewMode').addEventListener('change', (e) => {
+            currentView = e.target.value;
+            updateVisualization();
+        });
+
+        document.getElementById('filterType').addEventListener('change', (e) => {
+            updateVisualization();
+        });
+
+        document.getElementById('applyFilter').addEventListener('click', () => {
+            updateVisualization();
+        });
+
+        // Fetch and Update Data
+        async function fetchTimelineData() {
+            try {
+                const response = await fetch('/api/timeline-data');
+                timelineData = await response.json();
+                updateVisualization();
+            } catch (error) {
+                console.error('Error fetching timeline data:', error);
+            }
+        }
+
+        function updateVisualization() {
+            if (!timelineData) return;
+
+            switch (currentView) {
+                case 'timeline':
+                    initTimeline(timelineData.timelineEvents);
+                    break;
+                case 'graph':
+                    // TODO: Implement relationship graph view
+                    break;
+                case 'stats':
+                    updateStats(timelineData.timelineEvents);
+                    break;
+            }
+        }
+
+        // Initial Load
+        document.addEventListener('DOMContentLoaded', () => {
+            // Load sample data for development
+            timelineData = {
+                timelineEvents: [
+                    {
+                        temporal_info: { event_date: '2024-01-15T10:30:00Z' },
+                        file_info: { path: 'email1.txt', size_bytes: 156 },
+                        event_info: { type: 'email' },
+                        relationships: { attachments: [], related_documents: [] }
+                    },
+                    {
+                        temporal_info: { event_date: '2024-01-16T14:20:00Z' },
+                        file_info: { path: 'proposal.pdf', size_bytes: 1024 },
+                        event_info: { type: 'document' },
+                        relationships: { attachments: [], related_documents: [] }
+                    }
+                ]
+            };
+            updateVisualization();
+        });
+    </script>
+</body>
+</html>

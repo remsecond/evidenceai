@@ -1,0 +1,7 @@
+From: john@example.com
+To: team@example.com
+Date: 2024-01-17
+Subject: Updated Project Proposal
+
+Based on Mary's feedback, I've updated the proposal. The revised version
+and final budget are attached.

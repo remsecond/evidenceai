@@ -1,0 +1,117 @@
+{
+  "timelineEvents": [
+    {
+      "id": "e1",
+      "raw_content": {
+        "text": "From: john@example.com\nTo: mary@example.com\nDate: 2024-01-15\nSubject: Project Proposal\n\nPlease find attached the project proposal and budget spreadsheet.",
+        "chunks": [],
+        "structure": {}
+      },
+      "file_info": {
+        "path": "test-data/timeline-test/email1.txt",
+        "size_bytes": 156,
+        "size_mb": 0.00015,
+        "created": "2024-01-15T10:30:00Z",
+        "modified": "2024-01-15T10:30:00Z"
+      },
+      "temporal_info": {
+        "event_date": "2024-01-15T10:30:00Z",
+        "related_dates": [],
+        "date_confidence": 0.8,
+        "temporal_markers": []
+      },
+      "relationships": {
+        "attachments": [
+          {
+            "path": "processed/attachments/abc123",
+            "hash": "abc123",
+            "type": "document"
+          },
+          {
+            "path": "processed/attachments/def456",
+            "hash": "def456",
+            "type": "spreadsheet"
+          }
+        ],
+        "related_documents": []
+      },
+      "event_info": {
+        "type": "communication",
+        "actors": ["john@example.com", "mary@example.com"],
+        "actions": ["send", "attach"],
+        "impacts": [],
+        "significance": 0.5
+      }
+    },
+    {
+      "id": "e2",
+      "raw_content": {
+        "text": "Project Proposal\nVersion: 1.0\nDate: 2024-01-15\n\nExecutive Summary...",
+        "chunks": [],
+        "structure": {}
+      },
+      "file_info": {
+        "path": "test-data/timeline-test/project_proposal.pdf",
+        "size_bytes": 1024,
+        "size_mb": 0.001,
+        "created": "2024-01-15T10:25:00Z",
+        "modified": "2024-01-15T10:25:00Z"
+      },
+      "temporal_info": {
+        "event_date": "2024-01-15T10:25:00Z",
+        "related_dates": [],
+        "date_confidence": 0.8,
+        "temporal_markers": []
+      },
+      "relationships": {
+        "attachments": [],
+        "related_documents": [
+          {
+            "id": "e5",
+            "type": "version",
+            "relationship": "previous",
+            "temporal_relationship": "before",
+            "confidence": 0.9
+          }
+        ]
+      },
+      "event_info": {
+        "type": "document",
+        "actors": [],
+        "actions": ["create"],
+        "impacts": [],
+        "significance": 0.7
+      }
+    }
+  ],
+  "storageStats": {
+    "uniqueFiles": 3,
+    "totalReferences": 3,
+    "totalSize": 263,
+    "deduplicationRatio": 1.0,
+    "attachmentsByType": {
+      "document": 2,
+      "spreadsheet": 1
+    }
+  },
+  "relationships": {
+    "temporal": [
+      {
+        "source": "e1",
+        "target": "e2",
+        "type": "contains",
+        "confidence": 0.9
+      },
+      {
+        "source": "e2",
+        "target": "e5",
+        "type": "version",
+        "confidence": 0.9
+      }
+    ],
+    "actors": {
+      "john@example.com": ["e1", "e3"],
+      "mary@example.com": ["e1", "e2"]
+    }
+  }
+}

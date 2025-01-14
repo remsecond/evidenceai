@@ -1,376 +1,71 @@
-export const baseSchema = {
-  type: "object",
-  required: ["thread_id", "timeline", "relationships", "metadata"],
-  properties: {
-    thread_id: {
-      type: "string",
-      description: "Unique identifier for the document thread",
+export const BaseSchema = {
+    raw_content: {
+        text: '',
+        chunks: [],
+        structure: {}
     },
-    timeline: {
-      type: "object",
-      required: ["events"],
-      properties: {
-        events: {
-          type: "array",
-          items: {
-            type: "object",
-            required: ["timestamp", "type", "content"],
-            properties: {
-              timestamp: {
-                type: "string",
-                format: "date-time",
-                description: "ISO-8601 formatted timestamp",
-              },
-              type: {
-                type: "string",
-                enum: ["message", "document", "event", "summary", "section"],
-                description: "Type of timeline event",
-              },
-              key_points: {
-                type: "array",
-                items: {
-                  type: "object",
-                  required: ["type", "content"],
-                  properties: {
-                    type: {
-                      type: "string",
-                      enum: ["decisions", "actions", "deadlines", "disputes"],
-                      description: "Type of key point",
-                    },
-                    content: {
-                      type: "string",
-                      description: "Content of the key point",
-                    },
-                  },
-                },
-                description: "List of key points extracted from the content",
-              },
-              dates: {
-                type: "array",
-                items: {
-                  type: "object",
-                  required: ["original", "iso", "type"],
-                  properties: {
-                    original: {
-                      type: "string",
-                      description: "Original date string from text",
-                    },
-                    iso: {
-                      type: "string",
-                      format: "date-time",
-                      description: "ISO-8601 formatted date",
-                    },
-                    type: {
-                      type: "string",
-                      enum: ["explicit", "relative"],
-                      description: "Type of date reference",
-                    },
-                  },
-                },
-                description: "List of dates extracted from the content",
-              },
-              annotations: {
-                type: "object",
-                properties: {
-                  primary_type: {
-                    type: "string",
-                    enum: ["general", "legal", "financial", "parenting"],
-                    description: "Primary type of content",
-                  },
-                  importance: {
-                    type: "string",
-                    enum: ["normal", "high"],
-                    description: "Importance level of content",
-                  },
-                  context: {
-                    type: ["string", "null"],
-                    description: "Additional context for the content",
-                  },
-                  ambiguities: {
-                    type: "array",
-                    items: {
-                      type: "object",
-                      required: ["type", "context"],
-                      properties: {
-                        type: {
-                          type: "string",
-                          enum: ["needs_clarification"],
-                          description: "Type of ambiguity",
-                        },
-                        context: {
-                          type: "string",
-                          description: "Context around the ambiguity",
-                        },
-                      },
-                    },
-                    description: "List of ambiguities in the content",
-                  },
-                  tags: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                    description: "Content tags",
-                  },
-                },
-                description: "Content annotations and metadata",
-              },
-              participants: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-                description: "List of participants involved in the event",
-              },
-              content: {
-                type: "string",
-                description: "Event content or description",
-              },
-              sentiment: {
-                type: "number",
-                minimum: -1,
-                maximum: 1,
-                description:
-                  "Sentiment score between -1 (negative) and 1 (positive)",
-              },
-              topics: {
-                type: "array",
-                items: {
-                  type: "string",
-                },
-                description: "List of topics associated with the event",
-              },
-              source_file: {
-                type: "string",
-                description: "Source file for this event",
-              },
-              metadata: {
-                type: "object",
-                properties: {
-                  type: {
-                    type: "string",
-                    description: "Event metadata type",
-                  },
-                  importance: {
-                    type: "string",
-                    enum: ["normal", "high"],
-                    description: "Event importance",
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
+    file_info: {
+        path: '',
+        size_bytes: 0,
+        size_mb: 0,
+        created: null,
+        modified: null
     },
-    relationships: {
-      type: "object",
-      required: ["participant_network", "topic_links"],
-      properties: {
-        participant_network: {
-          type: "object",
-          description: "Graph of relationships between participants",
-        },
-        topic_links: {
-          type: "object",
-          description: "Graph of relationships between topics",
-        },
-      },
+    statistics: {
+        pages: 0,
+        words: 0,
+        paragraphs: 0,
+        average_paragraph_length: 0,
+        estimated_total_tokens: 0
     },
-    metadata: {
-      type: "object",
-      required: ["validation_status", "processing_timestamp"],
-      properties: {
-        task: {
-          type: "object",
-          properties: {
-            objective: {
-              type: "string",
-              description: "Processing task objective",
-            },
-            sample_queries: {
-              type: "array",
-              items: {
-                type: "string",
-              },
-              description: "Example queries for this task",
-            },
-            domain_terminology: {
-              type: "object",
-              description: "Domain-specific term mappings",
-            },
-          },
-        },
-        pdf_info: {
-          type: "array",
-          items: {
-            type: "object",
-            properties: {
-              path: {
-                type: "string",
-                description: "PDF file path",
-              },
-              pages: {
-                type: "number",
-                description: "Number of pages",
-              },
-              version: {
-                type: ["string", "null"],
-                description: "PDF version",
-              },
-              info: {
-                type: "object",
-                description: "PDF metadata",
-              },
-            },
-          },
-        },
-        statistics: {
-          type: "object",
-          properties: {
-            per_document: {
-              type: "array",
-              items: {
-                type: "object",
-              },
-            },
-            totals: {
-              type: "object",
-              properties: {
-                characters: {
-                  type: "number",
-                },
-                words: {
-                  type: "number",
-                },
-                paragraphs: {
-                  type: "number",
-                },
-                estimated_total_tokens: {
-                  type: "number",
-                },
-                average_paragraph_length: {
-                  type: "number",
-                },
-                documents_processed: {
-                  type: "number",
-                },
-              },
-            },
-          },
-        },
-        cross_references: {
-          type: "object",
-          properties: {
-            participant_overlaps: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  participant: {
-                    type: "string",
-                  },
-                  documents: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                },
-              },
-            },
-            topic_overlaps: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  topic: {
-                    type: "string",
-                  },
-                  documents: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                },
-              },
-            },
-            date_overlaps: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  date: {
-                    type: "string",
-                  },
-                  documents: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                },
-              },
-            },
-            key_point_overlaps: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  key_point: {
-                    type: "string",
-                  },
-                  documents: {
-                    type: "array",
-                    items: {
-                      type: "string",
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        validation_status: {
-          type: "string",
-          enum: ["pending", "valid", "invalid"],
-          description: "Current validation status",
-        },
-        processing_meta: {
-          type: "object",
-          properties: {
-            timestamp: {
-              type: "string",
-              format: "date-time",
-            },
-            version: {
-              type: "string",
-            },
-            processing_time_ms: {
-              type: "number",
-            },
-            files_processed: {
-              type: "number",
-            },
-          },
-        },
-      },
-    },
-  },
+    processing_meta: {
+        timestamp: '',
+        version: '1.0'
+    }
 };
 
-import Ajv from "ajv";
-import addFormats from "ajv-formats";
+export function validateBaseSchema(data) {
+    // Check if all required top-level properties exist
+    const requiredProps = ['raw_content', 'file_info', 'statistics', 'processing_meta'];
+    for (const prop of requiredProps) {
+        if (!(prop in data)) {
+            throw new Error(`Missing required property: ${prop}`);
+        }
+    }
 
-export const validateBaseSchema = (data) => {
-  const ajv = new Ajv({ allErrors: true });
-  addFormats(ajv); // Add support for date-time format
-  const validate = ajv.compile(baseSchema);
-  const valid = validate(data);
+    // Check raw_content structure
+    if (typeof data.raw_content.text !== 'string') {
+        throw new Error('raw_content.text must be a string');
+    }
+    if (!Array.isArray(data.raw_content.chunks)) {
+        throw new Error('raw_content.chunks must be an array');
+    }
 
-  return {
-    isValid: valid,
-    errors: validate.errors || [],
-  };
-};
+    // Check file_info structure
+    if (typeof data.file_info.path !== 'string') {
+        throw new Error('file_info.path must be a string');
+    }
+    if (typeof data.file_info.size_bytes !== 'number') {
+        throw new Error('file_info.size_bytes must be a number');
+    }
+
+    // Check statistics structure
+    if (typeof data.statistics.pages !== 'number') {
+        throw new Error('statistics.pages must be a number');
+    }
+    if (typeof data.statistics.words !== 'number') {
+        throw new Error('statistics.words must be a number');
+    }
+
+    // Check processing_meta structure
+    if (typeof data.processing_meta.timestamp !== 'string') {
+        throw new Error('processing_meta.timestamp must be a string');
+    }
+    if (typeof data.processing_meta.version !== 'string') {
+        throw new Error('processing_meta.version must be a string');
+    }
+
+    return true;
+}
+
+export default BaseSchema;

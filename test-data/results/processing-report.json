@@ -1,0 +1,36 @@
+{
+  "timestamp": "2025-01-09T08:55:04.238Z",
+  "file_info": {
+    "path": "C:\\Users\\robmo\\Desktop\\evidenceai\\test-data\\OFW_Messages_Report_Dec.pdf",
+    "size_bytes": 943408,
+    "size_mb": "0.90",
+    "created": "2025-01-06T21:12:04.372Z",
+    "modified": "2024-12-31T03:16:25.332Z"
+  },
+  "structure": {
+    "pages": 358,
+    "info": {
+      "PDFFormatVersion": "1.5",
+      "IsAcroFormPresent": false,
+      "IsXFAPresent": false,
+      "Creator": "JasperReports Library version 6.20.3-415f9428cffdb6805c6f85bbb29ebaf18813a2ab",
+      "Producer": "OpenPDF 1.3.30.jaspersoft.2",
+      "CreationDate": "D:20241231031623Z",
+      "ModDate": "D:20241231031623Z"
+    }
+  },
+  "statistics": {
+    "characters": 722394,
+    "words": 124019,
+    "paragraphs": 367,
+    "average_paragraph_length": 338,
+    "chunks": 3,
+    "average_chunk_size": 60200,
+    "estimated_total_tokens": 180599
+  },
+  "processing_meta": {
+    "timestamp": "2025-01-09T08:55:04.220Z",
+    "version": "1.0",
+    "processing_time_ms": 907
+  }
+}

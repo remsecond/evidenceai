@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Capability Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cline's Capabilities Demo</h1>
+    <p>This demo showcases various capabilities including:</p>
+    <ul>
+        <li>File Operations (reading, writing, modifying files)</li>
+        <li>Command Execution (running CLI commands)</li>
+        <li>Browser Interaction (clicking, typing, scrolling)</li>
+        <li>Code Analysis (examining source code)</li>
+        <li>MCP Integration (connecting to external services)</li>
+    </ul>
+    <button onclick="document.getElementById('output').textContent = 'Button clicked at ' + new Date().toLocaleString()">Click Me</button>
+    <div id="output"></div>
+</body>
+</html>

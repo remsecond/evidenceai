@@ -1,0 +1,7 @@
+From: john@example.com
+To: mary@example.com
+Date: 2024-01-15
+Subject: Project Proposal
+
+Please find attached the project proposal and budget spreadsheet.
+Let me know your thoughts.

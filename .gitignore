@@ -1,30 +1,102 @@
 # Dependencies
 node_modules/
-package-lock.json
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.tox/
 
-# Output directories
-ai-outputs/
-processed/
-demos/
-logs/
-coverage/
+# Build artifacts
+dist/
+build/
+*.egg-info/
+*.tsbuildinfo
+.next/
+out/
 
-# Environment files
-.env*
+# IDE
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+*.lnk
+
+# Logs and databases
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.sqlite
+*.sqlite3
+*.db
+
+# Environment and secrets
+.env
+.env.*
 !.env.example
+.env.local
+.env.*.local
+google-token.json
+credentials.json
+*.pem
+*.key
 
-# IDE files
-.vscode/
-*.code-workspace
+# Test coverage
+coverage/
+.nyc_output/
+htmlcov/
+.coverage
+coverage.xml
 
-# Test data
-test-data/
-test-files/
+# Generated files
+processed/
+uploads/
+input/*
+!input/test-data/
+ai-outputs/
+session_logs/
+monitoring/
+
+# Cache
+.cache/
+.npm/
+.eslintcache
+.stylelintcache
+.parcel-cache/
 
 # Temporary files
-*.log
 *.tmp
+*.temp
+*.bak
+*.swp
+*.pid
+*.seed
+*.pid.lock
 
-# Google authentication
-/config/google-auth-config.js
-google-token.json
+# TypeScript
+*.tsbuildinfo
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# Project specific
+demos/
+archive/
+COMMIT_MSG.txt
+CHECKPOINT.md
+*.url

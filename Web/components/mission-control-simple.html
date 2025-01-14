@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvidenceAI Mission Control</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #34495e;
+            --accent: #3498db;
+            --success: #2ecc71;
+            --warning: #f1c40f;
+            --danger: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: var(--light);
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--light);
+        }
+
+        .header h2 {
+            margin: 0;
+            color: var(--primary);
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .status.ready { background: var(--success); color: white; }
+        .status.processing { background: var(--warning); color: var(--dark); }
+        .status.error { background: var(--danger); color: white; }
+
+        .upload-zone {
+            border: 2px dashed var(--accent);
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 20px;
+        }
+
+        .upload-zone:hover {
+            background: rgba(52, 152, 219, 0.1);
+        }
+
+        .log {
+            background: var(--dark);
+            color: var(--light);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .tracking-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+
+        .tracking-item {
+            background: var(--light);
+            padding: 10px;
+            border-radius: 5px;
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tracking-item .label {
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .tracking-item .value {
+            color: var(--dark);
+        }
+
+        .tracking-item .status {
+            justify-self: end;
+        }
+
+        .button {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .button:hover {
+            background: #2980b9;
+        }
+
+        .button:disabled {
+            background: var(--secondary);
+            cursor: not-allowed;
+        }
+
+        #sheets-link {
+            color: var(--accent);
+            text-decoration: none;
+            margin-top: 10px;
+            display: inline-block;
+        }
+
+        #sheets-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- PDF Processing Section -->
+        <div class="card">
+            <div class="header">
+                <h2>PDF Processing</h2>
+                <span class="status ready" id="process-status">Ready</span>
+            </div>
+
+            <div class="upload-zone" id="upload-zone">
+                <p>Drop PDF file here or click to upload</p>
+                <input type="file" id="file-input" style="display: none" accept=".pdf">
+            </div>
+
+            <div class="log" id="process-log">
+                > System ready for processing
+            </div>
+        </div>
+
+        <!-- Google Sheets Tracking Section -->
+        <div class="card">
+            <div class="header">
+                <h2>Document Tracking</h2>
+                <span class="status ready" id="tracking-status">Connected</span>
+            </div>
+
+            <div class="tracking-section" id="tracking-section">
+                <!-- Tracking items will be added here -->
+            </div>
+
+            <div class="log" id="tracking-log">
+                > Tracking system ready
+            </div>
+
+            <a href="#" id="sheets-link" target="_blank" style="display: none">View in Google Sheets</a>
+        </div>
+    </div>
+
+    <script>
+        // File Upload Handling
+        const uploadZone = document.getElementById('upload-zone');
+        const fileInput = document.getElementById('file-input');
+        const processLog = document.getElementById('process-log');
+        const trackingLog = document.getElementById('tracking-log');
+        const processStatus = document.getElementById('process-status');
+        const trackingStatus = document.getElementById('tracking-status');
+        const trackingSection = document.getElementById('tracking-section');
+        const sheetsLink = document.getElementById('sheets-link');
+
+        // File Upload Events
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = getComputedStyle(document.documentElement).getPropertyValue('--accent');
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = '';
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length > 0) processFile(files[0]);
+        });
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) processFile(e.target.files[0]);
+        });
+
+        async function processFile(file) {
+            if (!file.type.includes('pdf')) {
+                alert('Please upload a PDF file');
+                return;
+            }
+
+            try {
+                // Update status
+                processStatus.textContent = 'Processing';
+                processStatus.className = 'status processing';
+                trackingStatus.textContent = 'Processing';
+                trackingStatus.className = 'status processing';
+
+                updateProcessLog('Starting file processing...');
+
+                // Create form data
+                const formData = new FormData();
+                formData.append('file', file);
+
+                // Process file
+                const response = await fetch('http://localhost:3002/process', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Processing failed: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Update status
+                    processStatus.textContent = 'Ready';
+                    processStatus.className = 'status ready';
+                    trackingStatus.textContent = 'Connected';
+                    trackingStatus.className = 'status ready';
+
+                    // Update tracking section
+                    updateTrackingSection(result);
+                    
+                    // Update logs
+                    updateProcessLog('Processing complete!');
+                    updateTrackingLog('Document tracked in Google Sheets');
+
+                    // Show sheets link
+                    if (result.sheetsUrl) {
+                        sheetsLink.href = result.sheetsUrl;
+                        sheetsLink.style.display = 'inline-block';
+                    }
+                } else {
+                    throw new Error('Processing failed');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                processStatus.textContent = 'Error';
+                processStatus.className = 'status error';
+                trackingStatus.textContent = 'Error';
+                trackingStatus.className = 'status error';
+                updateProcessLog(`Error: ${error.message}`);
+            }
+        }
+
+        function updateProcessLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            processLog.innerHTML = `> ${timestamp} ${message}\n${processLog.innerHTML}`;
+        }
+
+        function updateTrackingLog(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            trackingLog.innerHTML = `> ${timestamp} ${message}\n${trackingLog.innerHTML}`;
+        }
+
+        function updateTrackingSection(result) {
+            const trackingInfo = [
+                { label: 'Document ID', value: result.id },
+                { label: 'Status', value: result.status },
+                { label: 'Pages', value: result.pages },
+                { label: 'Word Count', value: result.wordCount },
+                { label: 'Processing Time', value: result.processingTime }
+            ];
+
+            trackingSection.innerHTML = trackingInfo.map(info => `
+                <div class="tracking-item">
+                    <span class="label">${info.label}</span>
+                    <span class="value">${info.value}</span>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        updateProcessLog('System initialized');
+        updateTrackingLog('Tracking system connected');
+    </script>
+</body>
+</html>

@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EvidenceAI Mission Control</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Workflow Guide -->
+    <div class="workflow-guide">
+        <h2>Evidence Processing Workflow</h2>
+        <div class="workflow-steps">
+            <div class="step">
+                <span class="step-number">1</span>
+                <div class="step-content">
+                    <h3>Pipeline Processing</h3>
+                    <p>Start the pipeline to process evidence files</p>
+                </div>
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                <div class="step-content">
+                    <h3>LLM Analysis</h3>
+                    <p>Prepare files for ChatGPT analysis</p>
+                </div>
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                <div class="step-content">
+                    <h3>Review Results</h3>
+                    <p>Check output files and analysis</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="tabs">
+        <button class="tab-button active" data-tab="pipeline">Pipeline</button>
+        <button class="tab-button" data-tab="llm">LLM Analysis</button>
+        <button class="tab-button" data-tab="settings">Settings</button>
+    </nav>
+
+    <main>
+        <!-- Pipeline Tab -->
+        <div id="pipeline" class="tab-content active">
+            <div class="workflow-container">
+                <!-- Pipeline Control -->
+                <div class="workflow-section">
+                    <h3>Pipeline Control</h3>
+                    <div class="controls">
+                        <button onclick="startPipeline()" class="primary-button">Start Pipeline</button>
+                        <button onclick="stopPipeline()" class="secondary-button">Stop Pipeline</button>
+                    </div>
+                    <div class="status-message">
+                        Click "Start Pipeline" to begin processing evidence files
+                    </div>
+                </div>
+
+                <!-- Processing Status -->
+                <div class="workflow-section">
+                    <h3>Processing Status</h3>
+                    <div id="status-indicators">
+                        <!-- Status indicators added dynamically -->
+                    </div>
+                </div>
+
+                <!-- Output Files -->
+                <div class="workflow-section">
+                    <h3>Output Files</h3>
+                    <div id="output-list">
+                        <!-- Output files listed dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- LLM Analysis Tab -->
+        <div id="llm" class="tab-content">
+            <div class="workflow-container">
+                <!-- Analysis Control -->
+                <div class="workflow-section">
+                    <h3>Analysis Control</h3>
+                    <div class="controls">
+                        <button onclick="prepareLLMAnalysis()" class="primary-button">Prepare Analysis</button>
+                        <button onclick="openChatGPT()" class="secondary-button">Open ChatGPT</button>
+                    </div>
+                    <div class="status-message">
+                        First run pipeline processing, then click "Prepare Analysis"
+                    </div>
+                </div>
+
+                <!-- Input Files -->
+                <div class="workflow-section">
+                    <h3>Input Files</h3>
+                    <div class="file-group">
+                        <button onclick="openFile('processed/chatgpt-input/1-timeline.json')">Timeline Data</button>
+                        <button onclick="openFile('processed/chatgpt-input/2-relationships.json')">Relationship Data</button>
+                        <button onclick="openFile('processed/chatgpt-input/3-validation.json')">Validation Data</button>
+                    </div>
+                </div>
+
+                <!-- Analysis Templates -->
+                <div class="workflow-section">
+                    <h3>Analysis Templates</h3>
+                    <div class="file-group">
+                        <button onclick="openFile('processed/analysis/evidence-report.md')">Report Template</button>
+                        <button onclick="openFile('processed/analysis/findings.json')">Findings Template</button>
+                        <button onclick="openFile('processed/analysis/review-notes.md')">Review Template</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab -->
+        <div id="settings" class="tab-content">
+            <div class="workflow-container">
+                <div class="workflow-section">
+                    <h3>Pipeline Settings</h3>
+                    <div class="controls">
+                        <button onclick="saveSettings()" class="primary-button">Save Settings</button>
+                        <button onclick="resetSettings()" class="secondary-button">Reset</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="notifications"></div>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                // Update button states
+                document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+                button.classList.add('active');
+
+                // Show selected tab
+                document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+                document.getElementById(button.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Pipeline functions
+        async function startPipeline() {
+            try {
+                const response = await fetch('/api/process', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    showNotification('Pipeline started successfully');
+                    updateStatus();
+                } else {
+                    showError('Failed to start pipeline');
+                }
+            } catch (error) {
+                showError('Error starting pipeline: ' + error.message);
+            }
+        }
+
+        function stopPipeline() {
+            // Stop pipeline logic
+        }
+
+        // LLM Analysis functions
+        async function prepareLLMAnalysis() {
+            try {
+                const response = await fetch('/api/prepare-llm', {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    document.querySelector('.analysis-files').style.display = 'block';
+                    showNotification('Analysis files prepared successfully');
+                } else {
+                    showError('Failed to prepare analysis files');
+                }
+            } catch (error) {
+                showError('Error preparing analysis: ' + error.message);
+            }
+        }
+
+        function openChatGPT() {
+            window.open('https://chat.openai.com', '_blank');
+        }
+
+        function openFile(path) {
+            fetch('/api/open-file', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ path })
+            });
+        }
+
+        // Settings functions
+        function saveSettings() {
+            // Save settings logic
+        }
+
+        function resetSettings() {
+            // Reset settings logic
+        }
+
+        // Utility functions
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+            document.getElementById('notifications').appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        function showError(message) {
+            const error = document.createElement('div');
+            error.className = 'notification error';
+            error.textContent = message;
+            document.getElementById('notifications').appendChild(error);
+            setTimeout(() => error.remove(), 5000);
+        }
+
+        // Status updates
+        async function updateStatus() {
+            try {
+                const response = await fetch('/api/status');
+                if (!response.ok) throw new Error('Failed to fetch status');
+                
+                const data = await response.json();
+                const statusDiv = document.getElementById('status-indicators');
+                
+                // Clear existing indicators
+                statusDiv.innerHTML = '';
+                
+                // Add pipeline status
+                const pipelineStatus = document.createElement('div');
+                pipelineStatus.className = `status-indicator ${data.pipeline ? 'success' : ''}`;
+                pipelineStatus.textContent = `Pipeline: ${data.pipeline ? 'Running' : 'Stopped'}`;
+                statusDiv.appendChild(pipelineStatus);
+                
+                // Add processing status if pipeline is running
+                if (data.pipeline) {
+                    const processingStatus = document.createElement('div');
+                    processingStatus.className = 'status-indicator';
+                    processingStatus.textContent = `Processing: ${data.filesProcessed || 0} files`;
+                    statusDiv.appendChild(processingStatus);
+                }
+                
+                // Update output files list
+                const outputList = document.getElementById('output-list');
+                outputList.innerHTML = '';
+                
+                if (data.outputFiles && data.outputFiles.length > 0) {
+                    data.outputFiles.forEach(file => {
+                        const fileDiv = document.createElement('div');
+                        fileDiv.className = 'output-file';
+                        fileDiv.innerHTML = `
+                            <span>${file}</span>
+                            <button onclick="openFile('processed/pipeline/${file}')" class="secondary-button">Open</button>
+                        `;
+                        outputList.appendChild(fileDiv);
+                    });
+                } else {
+                    outputList.innerHTML = '<div class="status-message">No output files generated yet</div>';
+                }
+                
+            } catch (error) {
+                console.error('Status update error:', error);
+                // Don't show error notification for status updates
+                // to avoid spamming the user
+            }
+        }
+
+        // Initialize status updates
+        updateStatus();
+        const statusInterval = setInterval(updateStatus, 1000);
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            clearInterval(statusInterval);
+        });
+    </script>
+</body>
+</html>

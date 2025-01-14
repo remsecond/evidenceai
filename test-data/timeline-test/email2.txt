@@ -1,0 +1,7 @@
+From: mary@example.com
+To: john@example.com
+Date: 2024-01-16
+Subject: Re: Project Proposal
+
+I've reviewed the proposal. The budget looks good but I've made some notes
+in the attached spreadsheet.

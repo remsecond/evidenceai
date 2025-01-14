@@ -1,0 +1,106 @@
+<!-- Add this tab to mission-control.html -->
+<div id="llm-analysis" class="tab-content">
+    <div class="section-header">
+        <h2>LLM Analysis</h2>
+        <div class="controls">
+            <button onclick="prepareLLMAnalysis()" class="primary-button">Prepare Analysis</button>
+            <button onclick="openChatGPT()" class="secondary-button">Open ChatGPT</button>
+        </div>
+    </div>
+
+    <div class="analysis-files" style="display: none">
+        <h3>Generated Files</h3>
+        <div class="file-group">
+            <h4>Input Files</h4>
+            <button onclick="openFile('processed/chatgpt-input/1-timeline.json')">Timeline Data</button>
+            <button onclick="openFile('processed/chatgpt-input/2-relationships.json')">Relationship Data</button>
+            <button onclick="openFile('processed/chatgpt-input/3-validation.json')">Validation Data</button>
+        </div>
+        
+        <div class="file-group">
+            <h4>Analysis Templates</h4>
+            <button onclick="openFile('processed/analysis/evidence-report.md')">Report Template</button>
+            <button onclick="openFile('processed/analysis/findings.json')">Findings Template</button>
+            <button onclick="openFile('processed/analysis/review-notes.md')">Review Template</button>
+        </div>
+    </div>
+
+    <div class="instructions">
+        <h3>Analysis Steps</h3>
+        <ol>
+            <li>Click "Prepare Analysis" to generate structured files</li>
+            <li>Review the generated input files</li>
+            <li>Click "Open ChatGPT" to launch analysis</li>
+            <li>Follow the prompts in README.md</li>
+            <li>Save analysis results in templates</li>
+        </ol>
+    </div>
+</div>
+
+<!-- Add this to your existing JavaScript -->
+<script>
+async function prepareLLMAnalysis() {
+    try {
+        const response = await fetch('/api/prepare-llm', {
+            method: 'POST'
+        });
+        
+        if (response.ok) {
+            document.querySelector('.analysis-files').style.display = 'block';
+            showNotification('Analysis files prepared successfully');
+        } else {
+            showError('Failed to prepare analysis files');
+        }
+    } catch (error) {
+        showError('Error preparing analysis: ' + error.message);
+    }
+}
+
+function openChatGPT() {
+    window.open('https://chat.openai.com', '_blank');
+}
+
+function openFile(path) {
+    fetch('/api/open-file', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ path })
+    });
+}
+</script>
+
+<!-- Add this to your CSS -->
+<style>
+.file-group {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.file-group h4 {
+    margin-bottom: 0.5rem;
+}
+
+.file-group button {
+    margin: 0.25rem;
+}
+
+.instructions {
+    margin-top: 2rem;
+    padding: 1rem;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+.instructions ol {
+    padding-left: 1.5rem;
+}
+
+.instructions li {
+    margin: 0.5rem 0;
+}
+</style>

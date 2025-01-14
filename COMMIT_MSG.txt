@@ -1,41 +1,29 @@
-fix(processors): Improve PDF and ODS processing for ChatGPT evidence preparation
+feat(core): preserve stable pipeline state
 
-- Fix pdf-processor.js to handle PDF files properly
-  * Add proper error handling for file not found
-  * Improve text extraction formatting
-  * Fix pdf-parse library integration
-  * Add CommonJS module compatibility
+Core Pipeline Files:
+- src/services/base-processor.js
+- src/services/pdf-processor.js
+- test-base-processor.js
+- test-pdf-processor.js
+- simple-pdf-processor/src/services/pdf-processor.js
+- simple-pdf-processor/src/services/ods-processor.js
+- simple-pdf-processor/test/core-pipeline.test.js
 
-- Fix ods-processor.js for ODS file handling
-  * Add xlsx package integration
-  * Implement extractHeaders method
-  * Add proper ES module exports
-  * Improve error handling
+Google Integration:
+- src/services/google-sheets.js
+- scripts/test-sheets-integration.js
+- config/google-auth-config.example.js
 
-- Enhance evidence preparation pipeline
-  * Successfully process email PDF (140KB)
-  * Successfully process ODS metadata (1.2KB)
-  * Successfully process OFW messages (794KB)
-  * Generate comprehensive README
-  * Create detailed manifest
+Test Files:
+- input/test-data/sample-ofw.txt
+- input/test-data/sample-email.txt
+- input/test-data/records.json
+- input/test-data/records.csv
 
-Dependencies:
-- Add pdf-parse for PDF processing
-- Add xlsx for ODS handling
+Configuration:
+- package.json
+- .gitignore
+- .env.example
 
-Documentation:
-- Add CHECKPOINT.md with current state
-- Add detailed processing instructions in README.md
-- Document file structure and pipeline flow
-
-Testing:
-- Verify PDF extraction works
-- Verify ODS parsing works
-- Confirm file preparation pipeline
-- Test with various file sizes
-
-Next Steps:
-- Verify ChatGPT integration
-- Add more test scenarios
-- Optimize performance
-- Enhance error reporting
+DO NOT add experimental features until core is stable.
+Current tests: 11/12 passing (minor email word count expectation)

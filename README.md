@@ -1,69 +1,130 @@
 # EvidenceAI
 
-PDF processing and analysis pipeline with multi-model support.
+A modular document processing system for extracting, analyzing, and correlating evidence from multiple document types.
 
-## Current Status
+## Core Features
 
-See [CHECKPOINT.md](CHECKPOINT.md) for latest working features and progress.
+- PDF document processing with smart chunking
+- Email thread analysis and extraction
+- OFW (Office File Wrapper) document support
+- Google Sheets integration for document tracking
+- Timeline generation and correlation
+- LLM-powered content analysis
 
-## Features
+## Project Structure
 
-- PDF processing with smart chunking
-- Multi-model support (claude, deepseek, gpt4, notebooklm, sonnet)
-- Structure-preserving text extraction
-- Detailed metadata and reporting
-- Google Sheets integration for data tracking and reporting
+```
+evidenceai/
+├── src/                    # Source code
+│   ├── processors/         # Document processors
+│   ├── services/          # Core services
+│   ├── schemas/           # Data schemas
+│   └── utils/             # Utility functions
+├── test/                  # Test files
+│   ├── fixtures/          # Test data
+│   ├── mocks/            # Test mocks
+│   └── unit/             # Unit tests
+├── scripts/              # Utility scripts
+├── docs/                 # Documentation
+├── Web/                  # Web interface
+└── config/               # Configuration files
+```
+
+## Prerequisites
+
+- Node.js 18+
+- Python 3.8+
+- Google Cloud project with Sheets API enabled
 
 ## Installation
 
+1. Clone the repository:
+```bash
+git clone https://github.com/yourusername/evidenceai.git
+cd evidenceai
+```
+
+2. Install dependencies:
 ```bash
 npm install
+python -m pip install -r requirements.txt
 ```
 
-### Google Sheets Setup
-
-1. Configure Google Cloud credentials:
+3. Set up environment variables:
 ```bash
 cp .env.example .env
-# Add your Google OAuth credentials to .env
+# Edit .env with your configuration
 ```
 
-2. Run the OAuth setup:
+4. Configure Google integration:
 ```bash
-node scripts/get-oauth-token.js
+node scripts/setup-google-project.js
 ```
-
-See [Google Integration Setup](docs/setup/google_integration_setup.md) for detailed instructions.
-
-## Usage
-
-Process a PDF file:
-```bash
-node scripts/process-ofw-with-pdf.js "path/to/your.pdf"
-```
-
-Output will be created in:
-```
-ai-outputs/
-  ├── claude/
-  ├── deepseek/
-  ├── gpt4/
-  ├── notebooklm/
-  └── sonnet/
-```
-
-Each run creates a timestamped directory containing:
-- Chunked JSON files with metadata
-- Full extracted text
-- Processing report
-- Success log
 
 ## Development
 
-Key components:
-- `scripts/process-ofw-with-pdf.js`: Main processing pipeline
-- `src/services/pdf-processor.js`: Core PDF processing logic
+Start the development server:
+```bash
+npm run dev
+```
+
+Run tests:
+```bash
+npm test
+```
+
+## Core Pipeline
+
+The core document processing pipeline:
+
+1. Document Ingestion
+   - Supports PDF, email, and OFW formats
+   - Smart chunking for optimal processing
+
+2. Content Extraction
+   - Text extraction with metadata
+   - Structure preservation
+   - Format-specific handling
+
+3. Analysis
+   - LLM-powered content analysis
+   - Timeline correlation
+   - Evidence chain building
+
+4. Output Generation
+   - Google Sheets integration
+   - Timeline visualization
+   - Evidence summaries
 
 ## Testing
 
-Test files are located in `test-data/`. The pipeline has been tested with files up to 1,048 pages and 515K tokens.
+Run specific test suites:
+
+```bash
+# Core pipeline tests
+npm run test:core-pipeline
+
+# Format handling tests
+npm run test:format-handling
+
+# Smart chunking tests
+npm run test:smart-chunking
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- PDF processing powered by pdf-parse
+- Email parsing by email-reply-parser
+- LLM integration using DeepSeek

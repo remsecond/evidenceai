@@ -1,4 +1,4 @@
-import { processPdf } from './src/services/pdf-processor.js';
+import pdfProcessor from './src/processors/pdf/pdf-processor.js';
 import fs from 'fs';
 import { join } from 'path';
 import { getLogger } from './src/utils/logging.js';
@@ -15,23 +15,23 @@ async function testPdfExtraction() {
         
         // Process PDF
         console.log('\nProcessing PDF...');
-        const result = await processPdf(testFile);
+        const result = await pdfProcessor.process(testFile);
         
         // Log document statistics
         console.log('\nDocument Statistics:');
         console.log('-----------------');
-        console.log('Pages:', result.raw_content.structure.pages);
-        console.log('Words:', result.statistics.words.toLocaleString());
-        console.log('Paragraphs:', result.statistics.paragraphs);
-        console.log('Total Characters:', result.statistics.characters.toLocaleString());
-        console.log('Processing Time:', result.processing_meta.processing_time_ms + 'ms');
+        console.log('Pages:', result.raw_content?.structure?.pages || 'N/A');
+        console.log('Words:', (result.statistics?.words || 0).toLocaleString());
+        console.log('Paragraphs:', result.statistics?.paragraphs || 'N/A');
+        console.log('Total Characters:', (result.statistics?.characters || 0).toLocaleString());
+        console.log('Processing Time:', (result.processing_meta?.processing_time_ms || 0) + 'ms');
 
         // Log chunking analysis
         console.log('\nChunking Analysis:');
         console.log('-----------------');
-        console.log('Total Chunks:', result.statistics.chunks);
-        console.log('Average Chunk Size:', result.statistics.average_chunk_size + ' tokens');
-        console.log('Estimated Total Tokens:', result.statistics.estimated_total_tokens.toLocaleString());
+        console.log('Total Chunks:', result.statistics?.chunks || 0);
+        console.log('Average Chunk Size:', (result.statistics?.average_chunk_size || 0) + ' tokens');
+        console.log('Estimated Total Tokens:', (result.statistics?.estimated_total_tokens || 0).toLocaleString());
 
         // Log detailed chunk information
         console.log('\nStructured Chunks:');
