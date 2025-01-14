@@ -1,380 +1,236 @@
-#!/usr/bin/env node
-import { Server } from '@modelcontextprotocol/sdk/server/index.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import {
-  CallToolRequestSchema,
-  ErrorCode,
-  ListResourcesRequestSchema,
-  ListResourceTemplatesRequestSchema,
-  ListToolsRequestSchema,
-  McpError,
-  ReadResourceRequestSchema,
-} from '@modelcontextprotocol/sdk/types.js';
+/// <reference types="node" />
+
 import { google } from 'googleapis';
+import type { sheets_v4 } from 'googleapis';
 import fs from 'fs';
 
-// Load environment variables
-const CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
-const REDIRECT_URI = 'http://localhost:3000/oauth2callback';
-
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET environment variables are required');
+interface DocumentMetadata {
+  fileName?: string;
+  type?: string;
+  pages?: number;
+  wordCount?: number;
+  processingTime?: string;
+  outputLocation?: string;
+  notes?: string;
+  currentStage?: string;
+  estimatedCompletion?: string;
+  statusMessage?: string;
 }
 
-class GoogleSheetsMcpServer {
-  private server: Server;
-  private oauth2Client;
-  private sheets;
+interface ProcessingQueueItem {
+  documentId: string;
+  status: 'pending' | 'processing' | 'completed' | 'error';
+  metadata: DocumentMetadata;
+  addedDate: string;
+}
+
+type SheetRow = string[];
+
+class GoogleSheetsService {
+  private sheets: sheets_v4.Sheets;
+  private spreadsheetId: string;
 
   constructor() {
-    this.server = new Server(
-      {
-        name: 'google-sheets-mcp',
-        version: '1.0.0',
-      },
-      {
-        capabilities: {
-          resources: {},
-          tools: {},
-        },
-      }
-    );
+    const credentials = this.loadCredentials();
+    const auth = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets']
+    });
 
-    // Setup OAuth2 client
-    this.oauth2Client = new google.auth.OAuth2(
-      CLIENT_ID,
-      CLIENT_SECRET,
-      REDIRECT_URI
-    );
-
-    // Load tokens if they exist
-    try {
-      const token = JSON.parse(fs.readFileSync('google-token.json', 'utf8'));
-      this.oauth2Client.setCredentials(token);
-    } catch (error) {
-      console.error('No token file found, authentication will be required');
-    }
-
-    // Initialize Google Sheets API
-    this.sheets = google.sheets({ version: 'v4', auth: this.oauth2Client });
-
-    this.setupTools();
-    this.setupResources();
+    this.sheets = google.sheets({ version: 'v4', auth });
+    this.spreadsheetId = process.env.GOOGLE_SHEET_ID || '';
     
-    // Error handling
-    this.server.onerror = (error) => console.error('[MCP Error]', error);
-    process.on('SIGINT', async () => {
-      await this.server.close();
-      process.exit(0);
-    });
-  }
-
-  private setupTools() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
-      tools: [
-        {
-          name: 'create_tracking_sheet',
-          description: 'Create a new document tracking spreadsheet',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              title: {
-                type: 'string',
-                description: 'Title for the tracking sheet'
-              },
-              template: {
-                type: 'string',
-                enum: ['library_catalog', 'processing_queue', 'metadata_tracker'],
-                description: 'Template to use for the sheet'
-              }
-            },
-            required: ['title', 'template']
-          }
-        },
-        {
-          name: 'update_document_status',
-          description: 'Update document processing status',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              document_id: {
-                type: 'string',
-                description: 'Unique identifier for the document'
-              },
-              status: {
-                type: 'string',
-                enum: ['pending', 'processing', 'completed', 'error'],
-                description: 'Current processing status'
-              },
-              metadata: {
-                type: 'object',
-                description: 'Additional document metadata'
-              }
-            },
-            required: ['document_id', 'status']
-          }
-        },
-        {
-          name: 'get_processing_queue',
-          description: 'Get current document processing queue',
-          inputSchema: {
-            type: 'object',
-            properties: {
-              status: {
-                type: 'string',
-                enum: ['pending', 'processing', 'completed', 'error'],
-                description: 'Filter by status'
-              },
-              limit: {
-                type: 'number',
-                description: 'Maximum number of documents to return'
-              }
-            }
-          }
-        }
-      ]
-    }));
-
-    this.server.setRequestHandler(CallToolRequestSchema, async (request) => {
-      try {
-        switch (request.params.name) {
-          case 'create_tracking_sheet':
-            return await this.createTrackingSheet(request.params.arguments);
-          case 'update_document_status':
-            return await this.updateDocumentStatus(request.params.arguments);
-          case 'get_processing_queue':
-            return await this.getProcessingQueue(request.params.arguments);
-          default:
-            throw new McpError(
-              ErrorCode.MethodNotFound,
-              `Unknown tool: ${request.params.name}`
-            );
-        }
-      } catch (error) {
-        if (error instanceof McpError) throw error;
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Tool execution failed: ${error.message}`
-        );
-      }
-    });
-  }
-
-  private setupResources() {
-    this.server.setRequestHandler(ListResourcesRequestSchema, async () => ({
-      resources: [
-        {
-          uri: 'sheets://templates/library_catalog',
-          name: 'Library Catalog Template',
-          description: 'Standard template for document library catalog'
-        },
-        {
-          uri: 'sheets://templates/processing_queue',
-          name: 'Processing Queue Template',
-          description: 'Template for document processing queue'
-        }
-      ]
-    }));
-
-    this.server.setRequestHandler(ListResourceTemplatesRequestSchema, async () => ({
-      resourceTemplates: [
-        {
-          uriTemplate: 'sheets://documents/{document_id}/status',
-          name: 'Document Status',
-          description: 'Current status and metadata for a specific document'
-        },
-        {
-          uriTemplate: 'sheets://queue/{status}',
-          name: 'Processing Queue',
-          description: 'Document processing queue filtered by status'
-        }
-      ]
-    }));
-
-    this.server.setRequestHandler(ReadResourceRequestSchema, async (request) => {
-      try {
-        // Handle resource reading based on URI pattern
-        if (request.params.uri.startsWith('sheets://templates/')) {
-          return await this.getTemplate(request.params.uri);
-        } else if (request.params.uri.startsWith('sheets://documents/')) {
-          return await this.getDocumentStatus(request.params.uri);
-        } else if (request.params.uri.startsWith('sheets://queue/')) {
-          return await this.getQueue(request.params.uri);
-        }
-        
-        throw new McpError(
-          ErrorCode.InvalidRequest,
-          `Invalid resource URI: ${request.params.uri}`
-        );
-      } catch (error) {
-        if (error instanceof McpError) throw error;
-        throw new McpError(
-          ErrorCode.InternalError,
-          `Resource read failed: ${error.message}`
-        );
-      }
-    });
-  }
-
-  private async createTrackingSheet(args: any) {
-    // Validate arguments
-    if (!args.title || !args.template) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        'Missing required parameters: title and template'
-      );
+    if (!this.spreadsheetId) {
+      throw new Error('GOOGLE_SHEET_ID environment variable is required');
     }
+  }
 
+  private loadCredentials(): Record<string, unknown> {
     try {
-      // Create new spreadsheet
-      const spreadsheet = await this.sheets.spreadsheets.create({
+      return JSON.parse(fs.readFileSync('google-credentials.json', 'utf8'));
+    } catch (error) {
+      throw new Error('Failed to load Google credentials: ' + error);
+    }
+  }
+
+  async getProcessingQueue(status?: string, limit = 10): Promise<ProcessingQueueItem[]> {
+    try {
+      // Get both Document Tracking and Processing Status data
+      const [trackingResponse, statusResponse] = await Promise.all([
+        this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: 'Document Tracking!A2:J'
+        }),
+        this.sheets.spreadsheets.values.get({
+          spreadsheetId: this.spreadsheetId,
+          range: 'Processing Status!A2:E'
+        })
+      ]);
+
+      const trackingRows = trackingResponse.data.values || [];
+      const statusRows = statusResponse.data.values || [];
+
+      // Create a map of document metadata from tracking sheet
+      const documentMetadata = new Map<string, DocumentMetadata>();
+      trackingRows.forEach((row: SheetRow) => {
+        documentMetadata.set(row[0], {
+          fileName: row[1],
+          type: row[2],
+          pages: row[5] ? parseInt(row[5], 10) : undefined,
+          wordCount: row[6] ? parseInt(row[6], 10) : undefined,
+          processingTime: row[7],
+          outputLocation: row[8],
+          notes: row[9]
+        });
+      });
+
+      // Build queue items from status sheet with metadata from tracking sheet
+      let queue = statusRows.map((row: SheetRow) => {
+        const documentId = row[0];
+        const metadata = {
+          ...documentMetadata.get(documentId),
+          currentStage: row[1],
+          estimatedCompletion: row[3],
+          statusMessage: row[4]
+        };
+
+        return {
+          documentId,
+          status: row[2] as 'pending' | 'processing' | 'completed' | 'error',
+          metadata,
+          addedDate: new Date().toISOString()
+        };
+      });
+
+      // Filter by status if provided
+      if (status) {
+        queue = queue.filter((item: ProcessingQueueItem) => item.status === status);
+      }
+
+      // Sort by most recent first and apply limit
+      queue.sort((a, b) => b.addedDate.localeCompare(a.addedDate));
+      return queue.slice(0, limit);
+    } catch (error) {
+      console.error('Failed to get processing queue:', error);
+      throw error;
+    }
+  }
+
+  async updateDocumentStatus(documentId: string, status: string, metadata?: DocumentMetadata): Promise<void> {
+    try {
+      // Update Document Tracking sheet
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.spreadsheetId,
+        range: 'Document Tracking!A:J',
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[
+            documentId,
+            metadata?.fileName || '',
+            metadata?.type || '',
+            new Date().toISOString(),
+            status,
+            metadata?.pages || '',
+            metadata?.wordCount || '',
+            metadata?.processingTime || '',
+            metadata?.outputLocation || '',
+            metadata?.notes || ''
+          ]]
+        }
+      });
+
+      // Update Processing Status sheet
+      await this.sheets.spreadsheets.values.append({
+        spreadsheetId: this.spreadsheetId,
+        range: 'Processing Status!A:E',
+        valueInputOption: 'RAW',
+        requestBody: {
+          values: [[
+            documentId,
+            metadata?.currentStage || 'Processing',
+            new Date().toISOString(),
+            metadata?.estimatedCompletion || '',
+            metadata?.statusMessage || `Status updated to ${status}`
+          ]]
+        }
+      });
+    } catch (error) {
+      console.error('Failed to update document status:', error);
+      throw error;
+    }
+  }
+
+  async createTrackingSheet(title: string): Promise<string> {
+    try {
+      const response = await this.sheets.spreadsheets.create({
         requestBody: {
           properties: {
-            title: args.title
+            title
           },
           sheets: [
             {
               properties: {
-                title: 'Documents'
+                title: 'Document Tracking',
+                gridProperties: {
+                  frozenRowCount: 1
+                }
+              }
+            },
+            {
+              properties: {
+                title: 'Processing Status',
+                gridProperties: {
+                  frozenRowCount: 1
+                }
               }
             }
           ]
         }
       });
 
-      // Apply template
-      await this.applyTemplate(spreadsheet.data.spreadsheetId!, args.template);
+      const spreadsheetId = response.data.spreadsheetId!;
 
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              spreadsheetId: spreadsheet.data.spreadsheetId,
-              title: args.title,
-              url: spreadsheet.data.spreadsheetUrl
-            })
-          }
-        ]
-      };
+      // Set up headers
+      await this.sheets.spreadsheets.values.batchUpdate({
+        spreadsheetId,
+        requestBody: {
+          valueInputOption: 'RAW',
+          data: [
+            {
+              range: 'Document Tracking!A1:J1',
+              values: [[
+                'Document ID',
+                'File Name',
+                'Type',
+                'Last Updated',
+                'Status',
+                'Pages',
+                'Word Count',
+                'Processing Time',
+                'Output Location',
+                'Notes'
+              ]]
+            },
+            {
+              range: 'Processing Status!A1:E1',
+              values: [[
+                'Document ID',
+                'Current Stage',
+                'Status',
+                'Estimated Completion',
+                'Status Message'
+              ]]
+            }
+          ]
+        }
+      });
+
+      return spreadsheetId;
     } catch (error) {
-      throw new McpError(
-        ErrorCode.InternalError,
-        `Failed to create tracking sheet: ${error.message}`
-      );
+      console.error('Failed to create tracking sheet:', error);
+      throw error;
     }
-  }
-
-  private async updateDocumentStatus(args: any) {
-    // Implementation
-    return {
-      content: [
-        {
-          type: 'text',
-          text: 'Status updated successfully'
-        }
-      ]
-    };
-  }
-
-  private async getProcessingQueue(args: any) {
-    // Implementation
-    return {
-      content: [
-        {
-          type: 'text',
-          text: JSON.stringify({
-            queue: []
-          })
-        }
-      ]
-    };
-  }
-
-  private async getTemplate(uri: string) {
-    // Implementation
-    return {
-      contents: [
-        {
-          uri,
-          mimeType: 'application/json',
-          text: JSON.stringify({
-            template: 'Example template'
-          })
-        }
-      ]
-    };
-  }
-
-  private async getDocumentStatus(uri: string) {
-    // Implementation
-    return {
-      contents: [
-        {
-          uri,
-          mimeType: 'application/json',
-          text: JSON.stringify({
-            status: 'pending'
-          })
-        }
-      ]
-    };
-  }
-
-  private async getQueue(uri: string) {
-    // Implementation
-    return {
-      contents: [
-        {
-          uri,
-          mimeType: 'application/json',
-          text: JSON.stringify({
-            queue: []
-          })
-        }
-      ]
-    };
-  }
-
-  private async applyTemplate(spreadsheetId: string, template: string) {
-    // Implementation of template application
-    const templates = {
-      library_catalog: [
-        ['Document ID', 'Title', 'Category', 'Status', 'Last Updated', 'Tags', 'Metadata'],
-      ],
-      processing_queue: [
-        ['Document ID', 'Priority', 'Status', 'Added Date', 'Start Time', 'End Time', 'Duration'],
-      ],
-      metadata_tracker: [
-        ['Document ID', 'Field', 'Value', 'Last Updated', 'Updated By'],
-      ]
-    };
-
-    const templateData = templates[template as keyof typeof templates];
-    if (!templateData) {
-      throw new McpError(
-        ErrorCode.InvalidParams,
-        `Invalid template: ${template}`
-      );
-    }
-
-    await this.sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: 'A1',
-      valueInputOption: 'RAW',
-      requestBody: {
-        values: templateData
-      }
-    });
-  }
-
-  async run() {
-    const transport = new StdioServerTransport();
-    await this.server.connect(transport);
-    console.error('Google Sheets MCP server running on stdio');
   }
 }
 
-const server = new GoogleSheetsMcpServer();
-server.run().catch(console.error);
+export { GoogleSheetsService, ProcessingQueueItem, DocumentMetadata };
