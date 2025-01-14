@@ -1,0 +1,25 @@
+From: christine.moyer@hotmail.com
+To: support@example.com
+Subject: Initial Contact
+Date: Thu, 11 Jan 2024 09:00:00 -0800
+
+I am writing to inquire about the status of my case. Please provide an update.
+
+From: support@example.com
+To: christine.moyer@hotmail.com
+Subject: Re: Initial Contact
+Date: Thu, 11 Jan 2024 09:30:00 -0800
+
+Thank you for your inquiry. I am reviewing your case and will provide an update shortly.
+
+From: support@example.com
+To: christine.moyer@hotmail.com
+Subject: Case Status Update
+Date: Thu, 11 Jan 2024 10:00:00 -0800
+
+Here is the current status of your case:
+- Review completed
+- Documentation verified
+- Next steps identified
+
+Please let me know if you have any questions.

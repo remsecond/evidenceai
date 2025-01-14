@@ -1,0 +1,7 @@
+From: sender2@example.com
+To: recipient2@example.com
+Subject: Test Email 2
+Date: Thu, 11 Jan 2024 10:00:00 -0800
+
+This is test email 2 content.
+Please find attached test-document-2.pdf for review.

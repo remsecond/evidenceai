@@ -1,0 +1,3 @@
+Thread ID,Message ID,From,To,Subject,Date
+123,456,sender1@example.com,recipient1@example.com,Test Email 1,2024-01-11T10:00:00-0800
+124,457,sender2@example.com,recipient2@example.com,Test Email 2,2024-01-11T10:00:00-0800
